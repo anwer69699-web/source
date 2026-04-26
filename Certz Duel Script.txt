@@ -1,0 +1,837 @@
+-- Certz Duel Script - Fixed Auto Steal Radius & Progress Bar
+-- Copy all text from here to END marker
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Workspace = game:GetService("Workspace")
+
+local player = Players.LocalPlayer
+local Camera = Workspace.CurrentCamera
+local leftActive = false
+local rightActive = false
+local speedStealActive = false
+local infJumpActive = false
+local autoStealActive = true
+local antiRagdollActive = false
+local speedBoostConn = nil
+local autoStealGui = nil
+local circleParts = {}
+local CIRCLE_COLOR = Color3.fromRGB(170, 0, 255)
+
+-- Anti-Ragdoll Variables
+local currentCharacter = nil
+local ragdollRemoteConnection = nil
+local moveConnection = nil
+local playerModule = nil
+local controls = nil
+local RAGDOLL_SPEED = 16
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "CertzDuelScript"
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.ResetOnSpawn = false
+
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Size = UDim2.new(0, 250, 0, 310)
+MainFrame.Position = UDim2.new(0.5, -125, 0.5, -155)
+MainFrame.BackgroundColor3 = Color3.fromRGB(45, 0, 45)
+MainFrame.BackgroundTransparency = 1
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.Parent = ScreenGui
+
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 12)
+UICorner.Parent = MainFrame
+
+local Background = Instance.new("Frame")
+Background.Name = "Background"
+Background.Size = UDim2.new(1, 0, 1, 0)
+Background.BackgroundColor3 = Color3.fromRGB(45, 0, 45)
+Background.BorderSizePixel = 0
+Background.Parent = MainFrame
+
+local UICorner2 = Instance.new("UICorner")
+UICorner2.CornerRadius = UDim.new(0, 12)
+UICorner2.Parent = Background
+
+local Title = Instance.new("TextLabel")
+Title.Name = "Title"
+Title.Size = UDim2.new(1, 0, 0, 30)
+Title.Position = UDim2.new(0, 0, 0, 0)
+Title.BackgroundColor3 = Color3.fromRGB(25, 0, 25)
+Title.BorderColor3 = Color3.fromRGB(0, 0, 0)
+Title.BorderSizePixel = 0
+Title.Text = "Certz Duel Script"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.Parent = MainFrame
+
+local UICorner3 = Instance.new("UICorner")
+UICorner3.CornerRadius = UDim.new(0, 12)
+UICorner3.Parent = Title
+
+local AutoLeftToggle = Instance.new("TextButton")
+AutoLeftToggle.Name = "AutoLeftToggle"
+AutoLeftToggle.Size = UDim2.new(0.8, 0, 0, 30)
+AutoLeftToggle.Position = UDim2.new(0.1, 0, 0.13, 0)
+AutoLeftToggle.BackgroundColor3 = Color3.fromRGB(80, 0, 80)
+AutoLeftToggle.BorderColor3 = Color3.fromRGB(0, 0, 0)
+AutoLeftToggle.BorderSizePixel = 0
+AutoLeftToggle.Text = "Auto Left: OFF"
+AutoLeftToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+AutoLeftToggle.Parent = MainFrame
+
+local UICorner4 = Instance.new("UICorner")
+UICorner4.CornerRadius = UDim.new(0, 8)
+UICorner4.Parent = AutoLeftToggle
+
+local AutoRightToggle = Instance.new("TextButton")
+AutoRightToggle.Name = "AutoRightToggle"
+AutoRightToggle.Size = UDim2.new(0.8, 0, 0, 30)
+AutoRightToggle.Position = UDim2.new(0.1, 0, 0.27, 0)
+AutoRightToggle.BackgroundColor3 = Color3.fromRGB(80, 0, 80)
+AutoRightToggle.BorderColor3 = Color3.fromRGB(0, 0, 0)
+AutoRightToggle.BorderSizePixel = 0
+AutoRightToggle.Text = "Auto Right: OFF"
+AutoRightToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+AutoRightToggle.Parent = MainFrame
+
+local UICorner5 = Instance.new("UICorner")
+UICorner5.CornerRadius = UDim.new(0, 8)
+UICorner5.Parent = AutoRightToggle
+
+local SpeedStealToggle = Instance.new("TextButton")
+SpeedStealToggle.Name = "SpeedStealToggle"
+SpeedStealToggle.Size = UDim2.new(0.8, 0, 0, 30)
+SpeedStealToggle.Position = UDim2.new(0.1, 0, 0.41, 0)
+SpeedStealToggle.BackgroundColor3 = Color3.fromRGB(80, 0, 80)
+SpeedStealToggle.BorderColor3 = Color3.fromRGB(0, 0, 0)
+SpeedStealToggle.BorderSizePixel = 0
+SpeedStealToggle.Text = "Speed When Stealing: OFF"
+SpeedStealToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+SpeedStealToggle.Parent = MainFrame
+
+local UICorner6 = Instance.new("UICorner")
+UICorner6.CornerRadius = UDim.new(0, 8)
+UICorner6.Parent = SpeedStealToggle
+
+local InfJumpToggle = Instance.new("TextButton")
+InfJumpToggle.Name = "InfJumpToggle"
+InfJumpToggle.Size = UDim2.new(0.8, 0, 0, 30)
+InfJumpToggle.Position = UDim2.new(0.1, 0, 0.55, 0)
+InfJumpToggle.BackgroundColor3 = Color3.fromRGB(80, 0, 80)
+InfJumpToggle.BorderColor3 = Color3.fromRGB(0, 0, 0)
+InfJumpToggle.BorderSizePixel = 0
+InfJumpToggle.Text = "Inf Jump: OFF"
+InfJumpToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+InfJumpToggle.Parent = MainFrame
+
+local UICorner7 = Instance.new("UICorner")
+UICorner7.CornerRadius = UDim.new(0, 8)
+UICorner7.Parent = InfJumpToggle
+
+local AutoStealToggle = Instance.new("TextButton")
+AutoStealToggle.Name = "AutoStealToggle"
+AutoStealToggle.Size = UDim2.new(0.8, 0, 0, 30)
+AutoStealToggle.Position = UDim2.new(0.1, 0, 0.69, 0)
+AutoStealToggle.BackgroundColor3 = Color3.fromRGB(80, 0, 80)
+AutoStealToggle.BorderColor3 = Color3.fromRGB(0, 0, 0)
+AutoStealToggle.BorderSizePixel = 0
+AutoStealToggle.Text = "Auto Steal: ON"
+AutoStealToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+AutoStealToggle.Parent = MainFrame
+
+local UICorner8 = Instance.new("UICorner")
+UICorner8.CornerRadius = UDim.new(0, 8)
+UICorner8.Parent = AutoStealToggle
+
+local AntiRagdollToggle = Instance.new("TextButton")
+AntiRagdollToggle.Name = "AntiRagdollToggle"
+AntiRagdollToggle.Size = UDim2.new(0.8, 0, 0, 30)
+AntiRagdollToggle.Position = UDim2.new(0.1, 0, 0.83, 0)
+AntiRagdollToggle.BackgroundColor3 = Color3.fromRGB(80, 0, 80)
+AntiRagdollToggle.BorderColor3 = Color3.fromRGB(0, 0, 0)
+AntiRagdollToggle.BorderSizePixel = 0
+AntiRagdollToggle.Text = "Anti Ragdoll: OFF"
+AntiRagdollToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+AntiRagdollToggle.Parent = MainFrame
+
+local UICorner9 = Instance.new("UICorner")
+UICorner9.CornerRadius = UDim.new(0, 8)
+UICorner9.Parent = AntiRagdollToggle
+
+Background.BackgroundTransparency = 1
+Title.BackgroundTransparency = 1
+AutoLeftToggle.BackgroundTransparency = 1
+AutoRightToggle.BackgroundTransparency = 1
+SpeedStealToggle.BackgroundTransparency = 1
+InfJumpToggle.BackgroundTransparency = 1
+AutoStealToggle.BackgroundTransparency = 1
+AntiRagdollToggle.BackgroundTransparency = 1
+
+local leftTargets = {
+    Vector3.new(-474.92510986328125, -6.398684978485107, 95.64352416992188),
+    Vector3.new(-482.6980285644531, -4.433956623077393, 98.34976196289062)
+}
+
+local rightTargets = {
+    Vector3.new(-473.9881286621094, -6.398684024810791, 25.45433807373047),
+    Vector3.new(-482.8011474609375, -4.433956623077393, 24.77419090270996)
+}
+
+local speed = 60
+local jumpForce = 50
+local clampFallSpeed = 80
+local AUTO_STEAL_PROX_RADIUS = 20
+local allAnimalsCache = {}
+local PromptMemoryCache = {}
+local InternalStealCache = {}
+local IsStealing = false
+local StealProgress = 0
+local PartsCount = 64
+
+local function getHRP()
+    local c = player.Character
+    return c and (c:FindFirstChild("HumanoidRootPart") or c:FindFirstChild("UpperTorso"))
+end
+
+-- ────────────────────────────────────────────────
+--  Anti-Ragdoll Functions
+-- ────────────────────────────────────────────────
+
+local function cleanupRagdoll()
+    if currentCharacter then
+        local root = currentCharacter:FindFirstChild("HumanoidRootPart")
+        if root then
+            local anchor = root:FindFirstChild("RagdollAnchor")
+            if anchor then
+                anchor:Destroy()
+            end
+        end
+    end
+
+    if moveConnection then
+        moveConnection:Disconnect()
+        moveConnection = nil
+    end
+end
+
+local function disconnectRemote()
+    if ragdollRemoteConnection then
+        ragdollRemoteConnection:Disconnect()
+        ragdollRemoteConnection = nil
+    end
+end
+
+local function setupAntiRagdoll(char)
+    if not antiRagdollActive then return end
+    
+    currentCharacter = char
+
+    cleanupRagdoll()
+    disconnectRemote()
+
+    local humanoid = char:WaitForChild("Humanoid", 5)
+    local root     = char:WaitForChild("HumanoidRootPart", 5)
+    local head     = char:WaitForChild("Head", 5)
+
+    if not (humanoid and root and head) then return end
+
+    pcall(function()
+        playerModule = require(player:WaitForChild("PlayerScripts"):WaitForChild("PlayerModule"))
+        controls = playerModule:GetControls()
+    end)
+
+    local success, ragdollRemote = pcall(function()
+        return ReplicatedStorage:WaitForChild("Packages", 8)
+            :WaitForChild("Ragdoll", 5)
+            :WaitForChild("Ragdoll", 5)
+    end)
+
+    if not success or not ragdollRemote or not ragdollRemote:IsA("RemoteEvent") then
+        return
+    end
+
+    ragdollRemoteConnection = ragdollRemote.OnClientEvent:Connect(function(arg1, arg2)
+        if not antiRagdollActive then return end
+
+        if arg1 == "Make" or arg2 == "manualM" then
+            humanoid:ChangeState(Enum.HumanoidStateType.Freefall)
+            Camera.CameraSubject = head
+            root.CanCollide = false
+
+            if controls then
+                pcall(controls.Enable, controls)
+            end
+
+            cleanupRagdoll()
+
+            local anchor = Instance.new("BodyPosition")
+            anchor.Name = "RagdollAnchor"
+            anchor.MaxForce = Vector3.new(1e6, 1e6, 1e6)
+            anchor.P = 5000
+            anchor.D = 1000
+            anchor.Position = root.Position
+            anchor.Parent = root
+
+            moveConnection = RunService.RenderStepped:Connect(function()
+                if not antiRagdollActive or not anchor or not anchor.Parent then
+                    if moveConnection then
+                        moveConnection:Disconnect()
+                        moveConnection = nil
+                    end
+                    return
+                end
+
+                local moveDir = humanoid.MoveDirection
+                if moveDir.Magnitude > 0 then
+                    anchor.Position = root.Position + moveDir.Unit * RAGDOLL_SPEED
+                else
+                    anchor.Position = root.Position
+                end
+            end)
+        end
+
+        if arg1 == "Destroy" or arg2 == "manualD" then
+            humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
+            Camera.CameraSubject = humanoid
+            root.CanCollide = true
+
+            if controls then
+                pcall(controls.Enable, controls)
+            end
+
+            cleanupRagdoll()
+        end
+    end)
+end
+
+-- ────────────────────────────────────────────────
+--  Auto Steal Functions - FIXED
+-- ────────────────────────────────────────────────
+
+task.spawn(function()
+    task.wait(2)
+    while task.wait(5) do
+        if autoStealActive then
+            table.clear(allAnimalsCache)
+            for _,plot in ipairs(workspace.Plots:GetChildren()) do
+                if plot:IsA("Model") then
+                    local sign = plot:FindFirstChild("PlotSign")
+                    local yourBase = sign and sign:FindFirstChild("YourBase")
+                    if not (yourBase and yourBase.Enabled) then
+                        local podiums = plot:FindFirstChild("AnimalPodiums")
+                        if podiums then
+                            for _,podium in ipairs(podiums:GetChildren()) do
+                                if podium:IsA("Model") and podium:FindFirstChild("Base") then
+                                    table.insert(allAnimalsCache,{
+                                        plot = plot.Name,
+                                        slot = podium.Name,
+                                        worldPosition = podium:GetPivot().Position,
+                                        uid = plot.Name.."_"..podium.Name
+                                    })
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+end)
+
+local function findPrompt(a)
+    local c = PromptMemoryCache[a.uid]
+    if c and c.Parent then return c end
+    local plot = workspace.Plots:FindFirstChild(a.plot)
+    local podium = plot and plot.AnimalPodiums:FindFirstChild(a.slot)
+    if not podium then return end
+    local base = podium:FindFirstChild("Base")
+    if not base then return end
+    local spawn = base:FindFirstChild("Spawn")
+    if not spawn then return end
+    local attach = spawn:FindFirstChild("PromptAttachment")
+    if not attach then return end
+    for _,p in ipairs(attach:GetChildren()) do
+        if p:IsA("ProximityPrompt") then
+            PromptMemoryCache[a.uid] = p
+            return p
+        end
+    end
+end
+
+local function build(prompt)
+    if InternalStealCache[prompt] then return end
+    local d = {h = {}, t = {}, r = true}
+    local success1, c1 = pcall(function() return getconnections(prompt.PromptButtonHoldBegan) end)
+    if success1 and c1 then
+        for _,c in ipairs(c1) do 
+            if c and type(c.Function) == "function" then 
+                table.insert(d.h, c.Function) 
+            end 
+        end
+    end
+    local success2, c2 = pcall(function() return getconnections(prompt.Triggered) end)
+    if success2 and c2 then
+        for _,c in ipairs(c2) do 
+            if c and type(c.Function) == "function" then 
+                table.insert(d.t, c.Function) 
+            end 
+        end
+    end
+    InternalStealCache[prompt] = d
+end
+
+local function steal(prompt)
+    local d = InternalStealCache[prompt]
+    if not d or not d.r then return end
+    d.r = false
+    IsStealing = true
+    StealProgress = 0
+    task.spawn(function()
+        for _,f in ipairs(d.h) do 
+            task.spawn(function()
+                pcall(f)
+            end) 
+        end
+        local s = tick()
+        while tick() - s < 1.3 do
+            StealProgress = (tick() - s) / 1.3
+            task.wait()
+        end
+        StealProgress = 1
+        for _,f in ipairs(d.t) do 
+            task.spawn(function()
+                pcall(f)
+            end) 
+        end
+        task.wait(0.2)
+        IsStealing = false
+        StealProgress = 0
+        d.r = true
+    end)
+end
+
+local function createCircle()
+    for _,p in ipairs(circleParts) do 
+        if p then pcall(function() p:Destroy() end) end
+    end
+    table.clear(circleParts)
+    for i = 1, PartsCount do
+        local part = Instance.new("Part")
+        part.Anchored = true
+        part.CanCollide = false
+        part.Material = Enum.Material.Neon
+        part.Color = CIRCLE_COLOR
+        part.Transparency = 0.35
+        part.Size = Vector3.new(1, 0.2, 0.3)
+        part.Parent = workspace
+        table.insert(circleParts, part)
+    end
+end
+
+local function initAutoStealGUI()
+    if autoStealGui then 
+        pcall(function() autoStealGui:Destroy() end) 
+        autoStealGui = nil
+    end
+    
+    autoStealGui = Instance.new("ScreenGui")
+    autoStealGui.Name = "AutoStealGUI"
+    autoStealGui.ResetOnSpawn = false
+    autoStealGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    autoStealGui.Parent = player:WaitForChild("PlayerGui")
+    
+    local frame = Instance.new("Frame")
+    frame.Name = "AutoStealFrame"
+    frame.Size = UDim2.new(0, 260, 0, 26)
+    frame.Position = UDim2.new(0.5, -130, 0, 20)
+    frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    frame.BackgroundTransparency = 0.2
+    frame.BorderSizePixel = 0
+    frame.Parent = autoStealGui
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 6)
+    corner.Parent = frame
+    
+    local stroke = Instance.new("UIStroke")
+    stroke.Thickness = 1.2
+    stroke.Color = CIRCLE_COLOR
+    stroke.Parent = frame
+    
+    local bg = Instance.new("Frame")
+    bg.Name = "ProgressBarBG"
+    bg.Size = UDim2.new(0.85, 0, 0, 8)
+    bg.Position = UDim2.new(0.05, 0, 0.5, -4)
+    bg.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    bg.BorderSizePixel = 0
+    bg.Parent = frame
+    
+    local bgCorner = Instance.new("UICorner")
+    bgCorner.CornerRadius = UDim.new(1, 0)
+    bgCorner.Parent = bg
+    
+    local fill = Instance.new("Frame")
+    fill.Name = "ProgressBarFill"
+    fill.Size = UDim2.new(0, 0, 1, 0)
+    fill.BackgroundColor3 = CIRCLE_COLOR
+    fill.BorderSizePixel = 0
+    fill.Parent = bg
+    
+    local fillCorner = Instance.new("UICorner")
+    fillCorner.CornerRadius = UDim.new(1, 0)
+    fillCorner.Parent = fill
+    
+    local radiusButton = Instance.new("TextButton")
+    radiusButton.Name = "RadiusButton"
+    radiusButton.Size = UDim2.new(0, 60, 1, 0)
+    radiusButton.Position = UDim2.new(0.9, 0, 0, 0)
+    radiusButton.BackgroundTransparency = 1
+    radiusButton.Text = tostring(AUTO_STEAL_PROX_RADIUS)
+    radiusButton.Font = Enum.Font.GothamBold
+    radiusButton.TextSize = 13
+    radiusButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    radiusButton.Parent = frame
+    
+    local typing = false
+    local box = nil
+    
+    radiusButton.MouseButton1Click:Connect(function()
+        if typing then return end
+        typing = true
+        
+        box = Instance.new("TextBox")
+        box.Name = "RadiusInput"
+        box.Size = radiusButton.Size
+        box.Position = radiusButton.Position
+        box.BackgroundTransparency = 1
+        box.Text = tostring(AUTO_STEAL_PROX_RADIUS)
+        box.Font = radiusButton.Font
+        box.TextSize = 13
+        box.TextColor3 = radiusButton.TextColor3
+        box.ClearTextOnFocus = false
+        box.Parent = frame
+        
+        box:CaptureFocus()
+        
+        box.FocusLost:Connect(function(enter)
+            if enter then
+                local n = tonumber(box.Text)
+                if n and n >= 5 and n <= 200 then
+                    AUTO_STEAL_PROX_RADIUS = math.floor(n)
+                    radiusButton.Text = tostring(AUTO_STEAL_PROX_RADIUS)
+                end
+            end
+            if box then
+                box:Destroy()
+                box = nil
+            end
+            typing = false
+        end)
+    end)
+    
+    -- Progress bar update loop
+    task.spawn(function()
+        while autoStealGui and autoStealGui.Parent and autoStealActive do
+            task.wait(0.03)
+            if fill and fill.Parent then
+                if IsStealing then
+                    pcall(function()
+                        local tween = TweenService:Create(fill, TweenInfo.new(0.1), {Size = UDim2.new(StealProgress, 0, 1, 0)})
+                        tween:Play()
+                    end)
+                else
+                    fill.Size = UDim2.new(math.max(0, fill.Size.X.Scale - 0.05), 0, 1, 0)
+                end
+            end
+            if not typing and radiusButton and radiusButton.Parent then
+                radiusButton.Text = tostring(AUTO_STEAL_PROX_RADIUS)
+            end
+        end
+    end)
+end
+
+local function moveToTargets(targetList)
+    local character = player.Character or player.CharacterAdded:Wait()
+    local hrp = character:WaitForChild("HumanoidRootPart")
+    for i, target in ipairs(targetList) do
+        while (hrp.Position - target).Magnitude > 1 do
+            if not leftActive and not rightActive then return end
+            hrp.Velocity = (target - hrp.Position).Unit * speed
+            RunService.RenderStepped:Wait()
+        end
+    end
+    hrp.Velocity = Vector3.new(0, 0, 0)
+end
+
+local function toggleSpeedBoost()
+    if speedBoostConn then
+        speedBoostConn:Disconnect()
+        speedBoostConn = nil
+    end
+    
+    if speedStealActive then
+        speedBoostConn = RunService.RenderStepped:Connect(function()
+            local char = player.Character
+            if not char then return end
+            local humanoid = char:FindFirstChildOfClass("Humanoid")
+            local hrp = char:FindFirstChild("HumanoidRootPart")
+            if not humanoid or not hrp then return end
+            local moveDir = humanoid.MoveDirection
+            if moveDir.Magnitude > 0 then
+                hrp.AssemblyLinearVelocity =
+                    (moveDir.Unit * 29) + Vector3.new(0, hrp.AssemblyLinearVelocity.Y, 0)
+            end
+        end)
+    end
+end
+
+local function toggleInfJump()
+    if not infJumpActive then return end
+    
+    local heartbeatConn
+    local jumpConn
+    
+    heartbeatConn = RunService.Heartbeat:Connect(function()
+        if not infJumpActive then 
+            if heartbeatConn then heartbeatConn:Disconnect() end
+            return 
+        end
+        local char = player.Character
+        if not char then return end
+        
+        local hrp = char:FindFirstChild("HumanoidRootPart")
+        if hrp and hrp.Velocity.Y < -clampFallSpeed then
+            hrp.Velocity = Vector3.new(hrp.Velocity.X, -clampFallSpeed, hrp.Velocity.Z)
+        end
+    end)
+    
+    jumpConn = UserInputService.JumpRequest:Connect(function()
+        if not infJumpActive then 
+            if jumpConn then jumpConn:Disconnect() end
+            return 
+        end
+        local char = player.Character
+        if not char then return end
+        
+        local hrp = char:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            hrp.Velocity = Vector3.new(hrp.Velocity.X, jumpForce, hrp.Velocity.Z)
+        end
+    end)
+end
+
+local function toggleAntiRagdoll()
+    if antiRagdollActive then
+        antiRagdollActive = false
+        AntiRagdollToggle.Text = "Anti Ragdoll: OFF"
+        AntiRagdollToggle.BackgroundColor3 = Color3.fromRGB(80, 0, 80)
+        cleanupRagdoll()
+        disconnectRemote()
+        currentCharacter = nil
+    else
+        antiRagdollActive = true
+        AntiRagdollToggle.Text = "Anti Ragdoll: ON"
+        AntiRagdollToggle.BackgroundColor3 = Color3.fromRGB(120, 0, 120)
+        
+        if player.Character then
+            task.spawn(function() setupAntiRagdoll(player.Character) end)
+        end
+        
+        player.CharacterAdded:Connect(function(char)
+            if antiRagdollActive then
+                task.spawn(function() setupAntiRagdoll(char) end)
+            end
+        end)
+        
+        player.CharacterRemoving:Connect(function()
+            cleanupRagdoll()
+            disconnectRemote()
+            currentCharacter = nil
+        end)
+    end
+end
+
+local function fadeIn()
+    local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+    local bgTween = TweenService:Create(Background, tweenInfo, {BackgroundTransparency = 0})
+    local titleTween = TweenService:Create(Title, tweenInfo, {BackgroundTransparency = 0})
+    local leftTween = TweenService:Create(AutoLeftToggle, tweenInfo, {BackgroundTransparency = 0})
+    local rightTween = TweenService:Create(AutoRightToggle, tweenInfo, {BackgroundTransparency = 0})
+    local speedTween = TweenService:Create(SpeedStealToggle, tweenInfo, {BackgroundTransparency = 0})
+    local jumpTween = TweenService:Create(InfJumpToggle, tweenInfo, {BackgroundTransparency = 0})
+    local stealTween = TweenService:Create(AutoStealToggle, tweenInfo, {BackgroundTransparency = 0})
+    local ragdollTween = TweenService:Create(AntiRagdollToggle, tweenInfo, {BackgroundTransparency = 0})
+    bgTween:Play()
+    titleTween:Play()
+    leftTween:Play()
+    rightTween:Play()
+    speedTween:Play()
+    jumpTween:Play()
+    stealTween:Play()
+    ragdollTween:Play()
+end
+
+-- ────────────────────────────────────────────────
+--  Button Connections
+-- ────────────────────────────────────────────────
+
+AutoLeftToggle.MouseButton1Click:Connect(function()
+    if leftActive then
+        leftActive = false
+        AutoLeftToggle.Text = "Auto Left: OFF"
+        AutoLeftToggle.BackgroundColor3 = Color3.fromRGB(80, 0, 80)
+    else
+        leftActive = true
+        rightActive = false
+        AutoLeftToggle.Text = "Auto Left: ON"
+        AutoLeftToggle.BackgroundColor3 = Color3.fromRGB(120, 0, 120)
+        AutoRightToggle.Text = "Auto Right: OFF"
+        AutoRightToggle.BackgroundColor3 = Color3.fromRGB(80, 0, 80)
+        task.spawn(function()
+            moveToTargets(leftTargets)
+            leftActive = false
+            AutoLeftToggle.Text = "Auto Left: OFF"
+            AutoLeftToggle.BackgroundColor3 = Color3.fromRGB(80, 0, 80)
+        end)
+    end
+end)
+
+AutoRightToggle.MouseButton1Click:Connect(function()
+    if rightActive then
+        rightActive = false
+        AutoRightToggle.Text = "Auto Right: OFF"
+        AutoRightToggle.BackgroundColor3 = Color3.fromRGB(80, 0, 80)
+    else
+        rightActive = true
+        leftActive = false
+        AutoRightToggle.Text = "Auto Right: ON"
+        AutoRightToggle.BackgroundColor3 = Color3.fromRGB(120, 0, 120)
+        AutoLeftToggle.Text = "Auto Left: OFF"
+        AutoLeftToggle.BackgroundColor3 = Color3.fromRGB(80, 0, 80)
+        task.spawn(function()
+            moveToTargets(rightTargets)
+            rightActive = false
+            AutoRightToggle.Text = "Auto Right: OFF"
+            AutoRightToggle.BackgroundColor3 = Color3.fromRGB(80, 0, 80)
+        end)
+    end
+end)
+
+SpeedStealToggle.MouseButton1Click:Connect(function()
+    if speedStealActive then
+        speedStealActive = false
+        SpeedStealToggle.Text = "Speed When Stealing: OFF"
+        SpeedStealToggle.BackgroundColor3 = Color3.fromRGB(80, 0, 80)
+        if speedBoostConn then
+            speedBoostConn:Disconnect()
+            speedBoostConn = nil
+        end
+    else
+        speedStealActive = true
+        SpeedStealToggle.Text = "Speed When Stealing: ON"
+        SpeedStealToggle.BackgroundColor3 = Color3.fromRGB(120, 0, 120)
+        toggleSpeedBoost()
+    end
+end)
+
+InfJumpToggle.MouseButton1Click:Connect(function()
+    if infJumpActive then
+        infJumpActive = false
+        InfJumpToggle.Text = "Inf Jump: OFF"
+        InfJumpToggle.BackgroundColor3 = Color3.fromRGB(80, 0, 80)
+    else
+        infJumpActive = true
+        InfJumpToggle.Text = "Inf Jump: ON"
+        InfJumpToggle.BackgroundColor3 = Color3.fromRGB(120, 0, 120)
+        toggleInfJump()
+    end
+end)
+
+AutoStealToggle.MouseButton1Click:Connect(function()
+    if autoStealActive then
+        autoStealActive = false
+        AutoStealToggle.Text = "Auto Steal: OFF"
+        AutoStealToggle.BackgroundColor3 = Color3.fromRGB(80, 0, 80)
+        if autoStealGui then
+            pcall(function() autoStealGui:Destroy() end)
+            autoStealGui = nil
+        end
+        for _,p in ipairs(circleParts) do
+            if p then pcall(function() p:Destroy() end) end
+        end
+        table.clear(circleParts)
+    else
+        autoStealActive = true
+        AutoStealToggle.Text = "Auto Steal: ON"
+        AutoStealToggle.BackgroundColor3 = Color3.fromRGB(120, 0, 120)
+        task.spawn(function()
+            initAutoStealGUI()
+            createCircle()
+        end)
+    end
+end)
+
+AntiRagdollToggle.MouseButton1Click:Connect(toggleAntiRagdoll)
+
+-- ────────────────────────────────────────────────
+--  Main Loops
+-- ────────────────────────────────────────────────
+
+RunService.Heartbeat:Connect(function()
+    if not autoStealActive or IsStealing then return end
+    local hrp = getHRP()
+    if not hrp then return end
+    local best, dist = nil, math.huge
+    for _,a in ipairs(allAnimalsCache) do
+        local d = (hrp.Position - a.worldPosition).Magnitude
+        if d < dist then dist = d best = a end
+    end
+    if not best or dist > AUTO_STEAL_PROX_RADIUS then return end
+    local p = findPrompt(best)
+    if not p then return end
+    build(p)
+    steal(p)
+end)
+
+RunService.RenderStepped:Connect(function()
+    if not autoStealActive then return end
+    local hrp = getHRP()
+    if not hrp then return end
+    if #circleParts == 0 then createCircle() end
+    for i,p in ipairs(circleParts) do
+        local a1 = math.rad((i - 1) / PartsCount * 360)
+        local a2 = math.rad(i / PartsCount * 360)
+        local p1 = Vector3.new(math.cos(a1), 0, math.sin(a1)) * AUTO_STEAL_PROX_RADIUS
+        local p2 = Vector3.new(math.cos(a2), 0, math.sin(a2)) * AUTO_STEAL_PROX_RADIUS
+        local c = (p1 + p2) / 2 + hrp.Position
+        p.Size = Vector3.new((p2 - p1).Magnitude, 0.2, 0.3)
+        p.CFrame = CFrame.new(c, c + Vector3.new(p2.X - p1.X, 0, p2.Z - p1.Z)) * CFrame.Angles(0, math.pi / 2, 0)
+    end
+end)
+
+player.CharacterAdded:Connect(function()
+    task.wait(1)
+    if autoStealActive then
+        createCircle()
+    end
+end)
+
+-- ────────────────────────────────────────────────
+--  Initialize
+-- ────────────────────────────────────────────────
+
+ScreenGui.Parent = player:WaitForChild("PlayerGui")
+fadeIn()
+task.spawn(function()
+    initAutoStealGUI()
+    createCircle()
+end)
+
+-- END of Certz Duel Script

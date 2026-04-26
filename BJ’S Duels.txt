@@ -1,0 +1,381 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local player = Players.LocalPlayer
+
+local BOOST_SPEED = 400
+local DEFAULT_SPEED = 16
+local AUTO_STEAL_PROX_RADIUS = 35 
+local SPIN_SPEED = 50
+local SPEED_BOOST_VALUE = 60
+local DRAG_THRESHOLD = 8
+local BAT_AIM_SPEED = 55
+local OFFSET_DISTANCE = 1.77
+local CATCHUP_BOOST_MULT = 15
+local STOP_THRESHOLD = 0.3
+
+local THEME_RED = Color3.fromRGB(255, 0, 0)
+local TEXT_WHITE = Color3.fromRGB(255, 255, 255)
+local ON_GREEN = Color3.fromRGB(0, 255, 120)
+local BG_DARK = Color3.fromRGB(13, 17, 23)
+
+local rightWaypoints = {
+    Vector3.new(-473.04, -6.99, 29.71), Vector3.new(-483.57, -5.10, 18.74),
+    Vector3.new(-475.00, -6.99, 26.43), Vector3.new(-474.67, -6.94, 105.48)
+}
+local leftWaypoints = {
+    Vector3.new(-472.49, -7.00, 90.62), Vector3.new(-484.62, -5.10, 100.37),
+    Vector3.new(-475.08, -7.00, 93.29), Vector3.new(-474.22, -6.96, 16.18)
+}
+
+local patrolMode = "none"
+local currentWaypoint = 1
+local autoGrabEnabled = false
+local spinEnabled = false
+local speedBoostEnabled = false
+local batAimEnabled = false
+local currentTarget = nil
+local antiRagdollMode = nil
+local ragdollConnections = {}
+local cachedCharData = {}
+local isBoosting = false
+
+local function getNearestOtherPlayer()
+    local character = player.Character
+    local myRoot = character and character:FindFirstChild("HumanoidRootPart")
+    if not myRoot then return nil end
+    local closest, closestDist = nil, math.huge
+    for _, plr in Players:GetPlayers() do
+        if plr == player or not plr.Character then continue end
+        local theirRoot = plr.Character:FindFirstChild("HumanoidRootPart")
+        if not theirRoot then continue end
+        local dist = (myRoot.Position - theirRoot.Position).Magnitude
+        if dist < closestDist then
+            closestDist = dist
+            closest = plr
+        end
+    end
+    return closest
+end
+
+local function cacheCharacterData()
+    local char = player.Character
+    if not char then return false end
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    local root = char:FindFirstChild("HumanoidRootPart")
+    if not hum or not root then return false end
+    cachedCharData = {character = char, humanoid = hum, root = root}
+    return true
+end
+
+local function disconnectAll()
+    for _, conn in ipairs(ragdollConnections) do pcall(function() conn:Disconnect() end) end
+    ragdollConnections = {}
+end
+
+local function isRagdolled()
+    if not cachedCharData.humanoid then return false end
+    local state = cachedCharData.humanoid:GetState()
+    local ragStates = {[Enum.HumanoidStateType.Physics] = true, [Enum.HumanoidStateType.Ragdoll] = true, [Enum.HumanoidStateType.FallingDown] = true}
+    if ragStates[state] then return true end
+    local endTime = player:GetAttribute("RagdollEndTime")
+    return endTime and (endTime - workspace:GetServerTimeNow()) > 0
+end
+
+local function forceExitRagdoll()
+    if not cachedCharData.humanoid or not cachedCharData.root then return end
+    pcall(function() player:SetAttribute("RagdollEndTime", workspace:GetServerTimeNow()) end)
+    for _, d in ipairs(cachedCharData.character:GetDescendants()) do
+        if d:IsA("BallSocketConstraint") or (d:IsA("Attachment") and d.Name:find("RagdollAttachment")) then d:Destroy() end
+    end
+    if not isBoosting then isBoosting = true cachedCharData.humanoid.WalkSpeed = BOOST_SPEED end
+    if cachedCharData.humanoid.Health > 0 then cachedCharData.humanoid:ChangeState(Enum.HumanoidStateType.Running) end
+end
+
+local function v1HeartbeatLoop()
+    while antiRagdollMode == "v1" do
+        task.wait()
+        local rag = isRagdolled()
+        if rag then forceExitRagdoll()
+        elseif isBoosting and not rag then
+            isBoosting = false
+            if cachedCharData.humanoid then cachedCharData.humanoid.WalkSpeed = DEFAULT_SPEED end
+        end
+    end
+end
+
+local function EnableAntiRagdoll()
+    if antiRagdollMode == "v1" then return end
+    if not cacheCharacterData() then return end
+    antiRagdollMode = "v1"
+    table.insert(ragdollConnections, RunService.RenderStepped:Connect(function()
+        if workspace.CurrentCamera and cachedCharData.humanoid then workspace.CurrentCamera.CameraSubject = cachedCharData.humanoid end
+    end))
+    table.insert(ragdollConnections, player.CharacterAdded:Connect(function()
+        isBoosting = false task.wait(0.5) cacheCharacterData()
+    end))
+    task.spawn(v1HeartbeatLoop)
+end
+
+local function DisableAntiRagdoll()
+    antiRagdollMode = nil
+    if isBoosting and cachedCharData.humanoid then cachedCharData.humanoid.WalkSpeed = DEFAULT_SPEED end
+    isBoosting = false disconnectAll() cachedCharData = {}
+end
+
+local IsStealing, StealProgress, CurrentTargetUID, allAnimalsCache = false, 0, nil, {}
+
+local function scanPlots()
+    if not autoGrabEnabled then return end
+    local plots = workspace:FindFirstChild("Plots")
+    if not plots then return end
+    local newCache = {}
+    for _, plot in ipairs(plots:GetChildren()) do
+        local sign = plot:FindFirstChild("PlotSign")
+        local isMine = sign and sign:FindFirstChild("YourBase") and sign.YourBase.Enabled
+        if not isMine then
+            local podiums = plot:FindFirstChild("AnimalPodiums")
+            if podiums then
+                for _, podium in ipairs(podiums:GetChildren()) do
+                    local base = podium:FindFirstChild("Base")
+                    if base then
+                        table.insert(newCache, {podium = podium, worldPosition = podium:GetPivot().Position, uid = plot.Name.."_"..podium.Name})
+                    end
+                end
+            end
+        end
+    end
+    allAnimalsCache = newCache
+end
+
+local function executeSteal(prompt, uid, pos)
+    if IsStealing or not autoGrabEnabled then return end
+    IsStealing = true
+    CurrentTargetUID = uid
+    task.spawn(function()
+        local duration, start = 0.55, os.clock()
+        while autoGrabEnabled and CurrentTargetUID == uid do
+            local elapsed = os.clock() - start
+            local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+            if not hrp or (hrp.Position - pos).Magnitude > (AUTO_STEAL_PROX_RADIUS + 5) then break end
+            StealProgress = math.clamp(elapsed/duration, 0, 1)
+            if StealProgress >= 1 then fireproximityprompt(prompt) break end
+            RunService.Heartbeat:Wait()
+        end
+        IsStealing, StealProgress, CurrentTargetUID = false, 0, nil
+    end)
+end
+
+local sg = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+sg.Name = "BJ_Utility_Final_V5_Complete"
+sg.ResetOnSpawn = false
+sg.IgnoreGuiInset = true
+sg.DisplayOrder = 999999999
+
+local TopBar = Instance.new("Frame", sg)
+TopBar.Size = UDim2.new(0.3, 0, 0, 8)
+TopBar.Position = UDim2.new(0.5, 0, 0, 15)
+TopBar.AnchorPoint = Vector2.new(0.5, 0)
+TopBar.BackgroundColor3 = BG_DARK
+TopBar.Visible = false
+Instance.new("UICorner", TopBar).CornerRadius = UDim.new(1, 0)
+local TopStroke = Instance.new("UIStroke", TopBar)
+TopStroke.Color = THEME_RED
+TopStroke.Thickness = 1.5
+
+local Fill = Instance.new("Frame", TopBar)
+Fill.Size = UDim2.new(0, 0, 1, 0)
+Fill.BackgroundColor3 = ON_GREEN
+Instance.new("UICorner", Fill).CornerRadius = UDim.new(1, 0)
+
+local function createButton(text, posY)
+    local btn = Instance.new("TextButton", sg)
+    btn.Size = UDim2.new(0, 115, 0, 40)
+    btn.Position = UDim2.new(0, 50, 0, posY - 60)
+    btn.BackgroundColor3 = BG_DARK
+    btn.Text = text
+    btn.TextColor3 = TEXT_WHITE
+    btn.TextSize = 13
+    btn.Font = Enum.Font.GothamBold
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 12)
+    local stroke = Instance.new("UIStroke", btn)
+    stroke.Thickness = 2.5
+    stroke.Color = THEME_RED
+    return btn
+end
+
+local rightBtn = createButton("Right Path", 100)
+local leftBtn  = createButton("Left Path", 148)
+local antiBtn  = createButton("Anti-Ragdoll", 196)
+local grabBtn  = createButton("Auto Grab", 244)
+local spinBtn  = createButton("Spin", 292)
+local speedBtn = createButton("Speed Boost", 340)
+local batBtn   = createButton("Bat Aim", 388)
+local tauntBtn = createButton("Taunt", 436)
+
+_G.GrabRadius = AUTO_STEAL_PROX_RADIUS
+_G.SpinSpeed = SPIN_SPEED
+_G.SpeedValue = SPEED_BOOST_VALUE
+_G.BatAimSpeed = BAT_AIM_SPEED
+
+local function addSettings(parent, varName, label)
+    local gear = Instance.new("TextButton", parent)
+    gear.Size = UDim2.new(0, 25, 0, 25)
+    gear.Position = UDim2.new(1, -28, 0.5, -12)
+    gear.BackgroundTransparency = 1
+    gear.Text = "⚙️"
+    gear.TextSize = 14
+    gear.TextColor3 = TEXT_WHITE
+    local frame = Instance.new("Frame", parent)
+    frame.Size = UDim2.new(1, 0, 0, 35)
+    frame.Position = UDim2.new(0, 0, 1, 5)
+    frame.BackgroundColor3 = BG_DARK
+    frame.Visible = false
+    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 8)
+    local st = Instance.new("UIStroke", frame)
+    st.Color = THEME_RED
+    local box = Instance.new("TextBox", frame)
+    box.Size = UDim2.new(1, 0, 1, 0)
+    box.BackgroundTransparency = 1
+    box.Font = Enum.Font.GothamBold
+    box.Text = label .. ": " .. _G[varName]
+    box.TextColor3 = TEXT_WHITE
+    box.TextSize = 11
+    gear.MouseButton1Click:Connect(function() frame.Visible = not frame.Visible end)
+    box.FocusLost:Connect(function()
+        local v = tonumber(box.Text:match("%d+"))
+        if v then _G[varName] = v box.Text = label .. ": " .. v else box.Text = label .. ": " .. _G[varName] end
+    end)
+end
+
+addSettings(grabBtn, "GrabRadius", "Radius")
+addSettings(spinBtn, "SpinSpeed", "Speed")
+addSettings(speedBtn, "SpeedValue", "Power")
+addSettings(batBtn, "BatAimSpeed", "Speed")
+
+local function setVisual(btn, active)
+    TweenService:Create(btn, TweenInfo.new(0.2), {TextColor3 = active and ON_GREEN or TEXT_WHITE}):Play()
+end
+
+local function setupButton(btn, callback)
+    local dragging, startPos, dragStart, moved = false, nil, nil, false
+    btn.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging, dragStart, startPos, moved = true, input.Position, btn.Position, false
+        end
+    end)
+    btn.InputChanged:Connect(function(input)
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            local delta = input.Position - dragStart
+            if delta.Magnitude > DRAG_THRESHOLD then moved = true end
+            btn.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+    btn.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = false
+            if not moved then callback() end
+        end
+    end)
+end
+
+setupButton(rightBtn, function() patrolMode = (patrolMode=="right" and "none" or "right") currentWaypoint = 1 setVisual(rightBtn, patrolMode=="right") setVisual(leftBtn, false) end)
+setupButton(leftBtn, function() patrolMode = (patrolMode=="left" and "none" or "left") currentWaypoint = 1 setVisual(leftBtn, patrolMode=="left") setVisual(rightBtn, false) end)
+setupButton(antiBtn, function() if antiRagdollMode=="v1" then DisableAntiRagdoll() setVisual(antiBtn, false) else EnableAntiRagdoll() setVisual(antiBtn, true) end end)
+setupButton(grabBtn, function() autoGrabEnabled = not autoGrabEnabled TopBar.Visible = autoGrabEnabled setVisual(grabBtn, autoGrabEnabled) end)
+setupButton(spinBtn, function() spinEnabled = not spinEnabled setVisual(spinBtn, spinEnabled) end)
+setupButton(speedBtn, function() speedBoostEnabled = not speedBoostEnabled setVisual(speedBtn, speedBoostEnabled) end)
+setupButton(batBtn, function() batAimEnabled = not batAimEnabled setVisual(batBtn, batAimEnabled) if not batAimEnabled then currentTarget = nil end end)
+setupButton(tauntBtn, function()
+    setVisual(tauntBtn, true) task.delay(0.2, function() setVisual(tauntBtn, false) end)
+    local msg = "/👑 BJ’S Duel Script On Top 👑\\"
+    local tcs = game:GetService("TextChatService")
+    if tcs.ChatVersion == Enum.ChatVersion.TextChatService then
+        local channel = tcs.TextChannels:FindFirstChild("RBXGeneral")
+        if channel then channel:SendAsync(msg) end
+    else
+        local event = ReplicatedStorage:FindFirstChild("DefaultChatSystemChatEvents")
+        if event then event.SayMessageRequest:FireServer(msg, "All") end
+    end
+end)
+
+RunService.Heartbeat:Connect(function()
+    local char = player.Character
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    local hum = char and char:FindFirstChild("Humanoid")
+    if not hrp or not hum then return end
+    
+    if speedBoostEnabled and hum.MoveDirection.Magnitude > 0 then
+        local dir = hum.MoveDirection
+        hrp.AssemblyLinearVelocity = Vector3.new(dir.X * _G.SpeedValue, hrp.AssemblyLinearVelocity.Y, dir.Z * _G.SpeedValue)
+    end
+
+    if batAimEnabled then
+        if not currentTarget or not currentTarget.Parent or not currentTarget.Character then
+            currentTarget = getNearestOtherPlayer()
+        end
+        if currentTarget and currentTarget.Character then
+            local tRoot = currentTarget.Character:FindFirstChild("HumanoidRootPart")
+            if tRoot then
+                local desiredPos = tRoot.Position + (-tRoot.CFrame.LookVector * OFFSET_DISTANCE)
+                local diff = desiredPos - hrp.Position
+                if diff.Magnitude > STOP_THRESHOLD then
+                    hrp.AssemblyLinearVelocity = diff.Unit * math.min(_G.BatAimSpeed, diff.Magnitude * CATCHUP_BOOST_MULT)
+                else
+                    hrp.AssemblyLinearVelocity = tRoot.AssemblyLinearVelocity
+                end
+            end
+        end
+        local bat = player.Backpack:FindFirstChild("Bat") or char:FindFirstChild("Bat")
+        if bat then
+            if bat.Parent == player.Backpack then hum:EquipTool(bat) end
+            bat:Activate()
+        end
+    end
+
+    if patrolMode ~= "none" then
+        local waypoints = (patrolMode == "right" and rightWaypoints or leftWaypoints)
+        local target = waypoints[currentWaypoint]
+        local dist = (Vector3.new(target.X, 0, target.Z) - Vector3.new(hrp.Position.X, 0, hrp.Position.Z)).Magnitude
+        if dist > 3 then
+            local speed = (currentWaypoint >= 3 and 29.4 or 60)
+            local dir = (Vector3.new(target.X, 0, target.Z) - Vector3.new(hrp.Position.X, 0, hrp.Position.Z)).Unit
+            hrp.AssemblyLinearVelocity = Vector3.new(dir.X * speed, hrp.AssemblyLinearVelocity.Y, dir.Z * speed)
+        else
+            currentWaypoint = (currentWaypoint >= #waypoints) and 1 or (currentWaypoint + 1)
+        end
+    end
+
+    if autoGrabEnabled then
+        Fill.Size = UDim2.new(math.clamp(StealProgress, 0, 1), 0, 1, 0)
+        if not IsStealing then
+            for _, animal in ipairs(allAnimalsCache) do
+                if (hrp.Position - animal.worldPosition).Magnitude <= _G.GrabRadius then
+                    local prompt = animal.podium:FindFirstChildWhichIsA("ProximityPrompt", true)
+                    if prompt then executeSteal(prompt, animal.uid, animal.worldPosition) break end
+                end
+            end
+        end
+    end
+
+    if spinEnabled then
+        if not hrp:FindFirstChild("SpinVelocity") then
+            local av = Instance.new("BodyAngularVelocity", hrp)
+            av.Name = "SpinVelocity"
+            av.MaxTorque = Vector3.new(0, math.huge, 0)
+        end
+        hrp.SpinVelocity.AngularVelocity = Vector3.new(0, _G.SpinSpeed, 0)
+    elseif hrp:FindFirstChild("SpinVelocity") then
+        hrp.SpinVelocity:Destroy()
+    end
+end)
+
+task.spawn(function()
+    while true do
+        if autoGrabEnabled then scanPlots() end
+        task.wait(1.5)
+    end
+end)

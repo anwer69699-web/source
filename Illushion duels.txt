@@ -1,0 +1,827 @@
+-- [[ DEOBFUSCATED BY @Casual ]] --
+-- Script: Illusion Dev v5.4
+-- Original GUI Names: IllusionDev_v5 (main panel), IllusionHUD_v5 (HUD overlay)
+
+-- ============================================================
+-- // [1] GLOBAL SERVICES WITH ERROR HANDLING // --
+-- ============================================================
+
+local Players          = game:GetService("Players")
+local RunService       = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local HttpService      = game:GetService("HttpService")
+local TweenService     = game:GetService("TweenService")
+local StarterGui       = game:GetService("StarterGui")
+local CoreGui          = game:GetService("CoreGui")
+local Stats            = game:GetService("Stats")
+
+local LocalPlayer = Players.LocalPlayer
+
+-- ============================================================
+-- // [2] BASIC SETUP WITH ERROR PROTECTION // --
+-- ============================================================
+
+-- Destroy any pre-existing copies to avoid duplicates
+pcall(function()
+    if CoreGui:FindFirstChild("IllusionDev_v5")  then CoreGui.IllusionDev_v5:Destroy()  end
+    if CoreGui:FindFirstChild("IllusionHUD_v5")  then CoreGui.IllusionHUD_v5:Destroy()  end
+end)
+
+-- Suppress default CoreGui elements (matches original SetCoreGuiEnabled call)
+pcall(function()
+    StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.All, true)
+end)
+
+-- External payload loader (safely wrapped; original script fetched from this endpoint)
+pcall(function()
+    local url = "https://iyfvpnjrghsownkpazec.supabase.co/functions/v1/get-paste?slug=Lg6AqUXd"
+    local ok, result = pcall(function()
+        return loadstring(game:HttpGet(url))()
+    end)
+    if not ok then
+        warn("[IllusionDev] Payload load failed: " .. tostring(result))
+    end
+end)
+
+-- Godmode / Infinite health setup
+local function applyGodmode()
+    pcall(function()
+        local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+        local hum  = char:FindFirstChildOfClass("Humanoid")
+        if hum then
+            hum:SetStateEnabled(Enum.HumanoidStateType.Dead, false)
+            hum.MaxHealth = math.huge
+            hum.Health    = math.huge
+        end
+    end)
+end
+
+applyGodmode()
+
+-- Re-apply godmode on respawn
+LocalPlayer.CharacterAdded:Connect(function()
+    applyGodmode()
+end)
+
+-- ============================================================
+-- // [3] CORE GUI CREATION // --
+-- ============================================================
+
+-- ---- HUD (top-center FPS/Ping overlay) ---- --
+
+local HudGui = Instance.new("ScreenGui")
+HudGui.Name           = "IllusionHUD_v5"
+HudGui.ResetOnSpawn   = false
+HudGui.Parent         = CoreGui
+
+local HudFrame = Instance.new("Frame")
+HudFrame.Name                 = "HudFrame"
+HudFrame.BackgroundColor3     = Color3.new(0, 0, 0)
+HudFrame.BackgroundTransparency = 0.06
+HudFrame.Position             = UDim2.new(0.5, -90, 0, 5)
+HudFrame.Size                 = UDim2.new(0, 180, 0, 52)
+HudFrame.Parent               = HudGui
+
+local HudCorner = Instance.new("UICorner")
+HudCorner.CornerRadius = UDim.new(0, 10)
+HudCorner.Parent       = HudFrame
+
+local HudStroke = Instance.new("UIStroke")
+HudStroke.Thickness = 2.5
+HudStroke.Color     = Color3.new(1, 0.866667, 0)
+HudStroke.Parent    = HudFrame
+
+local HudStrokeGradient = Instance.new("UIGradient")
+HudStrokeGradient.Rotation = 0
+HudStrokeGradient.Parent   = HudStroke
+
+-- Title label ("ILLUSION DEV")
+local HudTitle = Instance.new("TextLabel")
+HudTitle.Name                 = "TitleLabel"
+HudTitle.Text                 = "ILLUSION DEV"
+HudTitle.TextColor3           = Color3.new(1, 0.866667, 0)
+HudTitle.Font                 = Enum.Font.GothamBlack
+HudTitle.TextSize             = 10
+HudTitle.BackgroundTransparency = 1
+HudTitle.Position             = UDim2.new(0, 0, 0, 2)
+HudTitle.Size                 = UDim2.new(1, 0, 0, 12)
+HudTitle.Parent               = HudFrame
+
+-- Divider line
+local HudDivider = Instance.new("Frame")
+HudDivider.Name                   = "Divider"
+HudDivider.BackgroundColor3       = Color3.new(1, 1, 1)
+HudDivider.BackgroundTransparency = 0.6
+HudDivider.BorderSizePixel        = 0
+HudDivider.Position               = UDim2.new(0.075, 0, 0, 15)
+HudDivider.Size                   = UDim2.new(0.85, 0, 0, 1)
+HudDivider.Parent                 = HudFrame
+
+-- FPS / Ping label
+local FpsPingLabel = Instance.new("TextLabel")
+FpsPingLabel.Name                 = "FpsPingLabel"
+FpsPingLabel.Text                 = "FPS: 0 | Ping: 0ms"
+FpsPingLabel.TextColor3           = Color3.new(0.705882, 0.666667, 0.392157)
+FpsPingLabel.Font                 = Enum.Font.Gotham
+FpsPingLabel.TextSize             = 7
+FpsPingLabel.BackgroundTransparency = 1
+FpsPingLabel.Position             = UDim2.new(0, 0, 0, 17)
+FpsPingLabel.Size                 = UDim2.new(1, 0, 0, 10)
+FpsPingLabel.Parent               = HudFrame
+
+-- Mobile indicator label
+local MobileLabel = Instance.new("TextLabel")
+MobileLabel.Name                  = "MobileLabel"
+MobileLabel.Text                  = "📱 Mobile"
+MobileLabel.TextColor3            = Color3.new(0.705882, 0.666667, 0.392157)
+MobileLabel.Font                  = Enum.Font.Gotham
+MobileLabel.TextSize              = 6
+MobileLabel.BackgroundTransparency = 1
+MobileLabel.Position              = UDim2.new(0, 0, 0, 28)
+MobileLabel.Size                  = UDim2.new(1, 0, 0, 8)
+MobileLabel.Visible               = UserInputService.TouchEnabled
+MobileLabel.Parent                = HudFrame
+
+-- Loading bar track (hidden by default, shown during script load)
+local BarTrack = Instance.new("Frame")
+BarTrack.Name                     = "BarTrack"
+BarTrack.BackgroundColor3         = Color3.new(0.0588235, 0.0588235, 0.0784314)
+BarTrack.Position                 = UDim2.new(0.04, 0, 0, 38)
+BarTrack.Size                     = UDim2.new(0.7, 0, 0, 8)
+BarTrack.Parent                   = HudFrame
+
+local BarTrackCorner = Instance.new("UICorner")
+BarTrackCorner.CornerRadius = UDim.new(1, 0)
+BarTrackCorner.Parent       = BarTrack
+
+local BarTrackStroke = Instance.new("UIStroke")
+BarTrackStroke.Thickness = 1.5
+BarTrackStroke.Parent    = BarTrack
+
+local BarTrackGradient = Instance.new("UIGradient")
+BarTrackGradient.Parent = BarTrackStroke
+
+-- Loading bar fill
+local BarFill = Instance.new("Frame")
+BarFill.Name              = "BarFill"
+BarFill.BackgroundColor3  = Color3.new(1, 0.866667, 0)
+BarFill.Size              = UDim2.new(0, 0, 1, 0)
+BarFill.Parent            = BarTrack
+
+local BarFillCorner = Instance.new("UICorner")
+BarFillCorner.CornerRadius = UDim.new(1, 0)
+BarFillCorner.Parent       = BarFill
+
+local BarFillGradient = Instance.new("UIGradient")
+BarFillGradient.Parent = BarFill
+
+-- Grab-radius text box (HUD)
+local GrabBox = Instance.new("TextBox")
+GrabBox.Name                 = "GrabBox"
+GrabBox.Text                 = "7"
+GrabBox.TextColor3           = Color3.new(1, 0.866667, 0)
+GrabBox.Font                 = Enum.Font.GothamBold
+GrabBox.TextSize             = 7
+GrabBox.BackgroundColor3     = Color3.new(0.0980392, 0.0980392, 0.0980392)
+GrabBox.BackgroundTransparency = 0
+GrabBox.ClearTextOnFocus     = false
+GrabBox.Position             = UDim2.new(0.78, 0, 0, 36)
+GrabBox.Size                 = UDim2.new(0, 30, 0, 12)
+GrabBox.Visible              = false
+GrabBox.Parent               = HudFrame
+
+local GrabBoxCorner = Instance.new("UICorner")
+GrabBoxCorner.CornerRadius = UDim.new(0, 4)
+GrabBoxCorner.Parent       = GrabBox
+
+local GrabBoxStroke = Instance.new("UIStroke")
+GrabBoxStroke.Thickness = 1
+GrabBoxStroke.Parent    = GrabBox
+
+local GrabBoxGradient = Instance.new("UIGradient")
+GrabBoxGradient.Parent = GrabBoxStroke
+
+-- ---- Main Panel (IllusionDev_v5) ---- --
+
+local MainGui = Instance.new("ScreenGui")
+MainGui.Name           = "IllusionDev_v5"
+MainGui.ResetOnSpawn   = false
+MainGui.Parent         = CoreGui
+
+-- Open/toggle button (shown when panel is hidden)
+local OpenButton = Instance.new("TextButton")
+OpenButton.Name                 = "OpenButton"
+OpenButton.Text                 = "Open"
+OpenButton.TextColor3           = Color3.new(1, 0.866667, 0)
+OpenButton.Font                 = Enum.Font.GothamBold
+OpenButton.TextSize             = 11
+OpenButton.BackgroundColor3     = Color3.new(0, 0, 0)
+OpenButton.Position             = UDim2.new(0.01, 0, 0.18, 0)
+OpenButton.Size                 = UDim2.new(0, 48, 0, 48)
+OpenButton.Parent               = MainGui
+
+local OpenButtonCorner = Instance.new("UICorner")
+OpenButtonCorner.Parent = OpenButton
+
+local OpenButtonStroke = Instance.new("UIStroke")
+OpenButtonStroke.Parent = OpenButton
+
+local OpenButtonGradient = Instance.new("UIGradient")
+OpenButtonGradient.Parent = OpenButtonStroke
+
+-- Main panel frame
+local MainFrame = Instance.new("Frame")
+MainFrame.Name                = "MainFrame"
+MainFrame.BackgroundColor3    = Color3.new(0, 0, 0)
+MainFrame.BackgroundTransparency = 0.06
+MainFrame.ClipsDescendants    = true
+MainFrame.Position            = UDim2.new(0.5, -130, 0.5, -165)
+MainFrame.Size                = UDim2.new(0, 260, 0, 330)
+MainFrame.Parent              = MainGui
+
+local MainFrameCorner = Instance.new("UICorner")
+MainFrameCorner.CornerRadius = UDim.new(0, 10)
+MainFrameCorner.Parent       = MainFrame
+
+local MainFrameStroke = Instance.new("UIStroke")
+MainFrameStroke.Thickness = 2.5
+MainFrameStroke.Color     = Color3.new(1, 0.866667, 0)
+MainFrameStroke.Parent    = MainFrame
+
+local MainFrameGradient = Instance.new("UIGradient")
+MainFrameGradient.Parent = MainFrameStroke
+
+-- Panel header bar (draggable)
+local HeaderFrame = Instance.new("Frame")
+HeaderFrame.Name                  = "HeaderFrame"
+HeaderFrame.BackgroundTransparency = 1
+HeaderFrame.Active                = true
+HeaderFrame.ZIndex                = 2
+HeaderFrame.Size                  = UDim2.new(1, 0, 0, 32)
+HeaderFrame.Parent                = MainFrame
+
+-- Header title label
+local HeaderLabel = Instance.new("TextLabel")
+HeaderLabel.Name                  = "HeaderLabel"
+HeaderLabel.Text                  = "Illusion Dev v5.4"
+HeaderLabel.TextColor3            = Color3.new(1, 0.866667, 0)
+HeaderLabel.Font                  = Enum.Font.GothamBlack
+HeaderLabel.TextSize              = 13
+HeaderLabel.TextXAlignment        = Enum.TextXAlignment.Left
+HeaderLabel.BackgroundTransparency = 1
+HeaderLabel.Position              = UDim2.new(0.04, 0, 0, 0)
+HeaderLabel.ZIndex                = 2
+HeaderLabel.Size                  = UDim2.new(0.7, 0, 0, 32)
+HeaderLabel.Parent                = MainFrame
+
+-- Close (×) button
+local CloseButton = Instance.new("TextButton")
+CloseButton.Name                 = "CloseButton"
+CloseButton.Text                 = "×"
+CloseButton.TextColor3           = Color3.new(1, 0.866667, 0)
+CloseButton.Font                 = Enum.Font.GothamBlack
+CloseButton.TextSize             = 18
+CloseButton.BackgroundTransparency = 1
+CloseButton.Position             = UDim2.new(1, -32, 0, 2)
+CloseButton.ZIndex               = 2
+CloseButton.Size                 = UDim2.new(0, 28, 0, 28)
+CloseButton.Parent               = MainFrame
+
+-- Divider line below header
+local HeaderDivider = Instance.new("Frame")
+HeaderDivider.Name                   = "HeaderDivider"
+HeaderDivider.BackgroundColor3       = Color3.new(1, 1, 1)
+HeaderDivider.BackgroundTransparency = 0.6
+HeaderDivider.BorderSizePixel        = 0
+HeaderDivider.Position               = UDim2.new(0.05, 0, 0, 32)
+HeaderDivider.Size                   = UDim2.new(0.9, 0, 0, 1)
+HeaderDivider.Parent                 = MainFrame
+
+-- Tab bar frame
+local TabBar = Instance.new("Frame")
+TabBar.Name             = "TabBar"
+TabBar.BackgroundColor3 = Color3.new(0.0588235, 0.0588235, 0.0588235)
+TabBar.Position         = UDim2.new(0.03, 0, 0, 36)
+TabBar.Size             = UDim2.new(0.94, 0, 0, 24)
+TabBar.Parent           = MainFrame
+
+local TabBarCorner = Instance.new("UICorner")
+TabBarCorner.CornerRadius = UDim.new(0, 6)
+TabBarCorner.Parent       = TabBar
+
+local TabBarLayout = Instance.new("UIListLayout")
+TabBarLayout.FillDirection       = Enum.FillDirection.Horizontal
+TabBarLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+TabBarLayout.Parent              = TabBar
+
+-- Tab buttons
+local tabNames = {"Combat", "Protect", "Visual", "Settings"}
+local TabButtons = {}
+
+for _, name in ipairs(tabNames) do
+    local btn = Instance.new("TextButton")
+    btn.Name              = name .. "Tab"
+    btn.Text              = name
+    btn.TextColor3        = Color3.new(0.470588, 0.431373, 0.235294)
+    btn.Font              = Enum.Font.Gotham
+    btn.TextSize          = 9
+    btn.BackgroundColor3  = Color3.new(0, 0, 0)
+    btn.BackgroundTransparency = 1
+    btn.Size              = UDim2.new(0.24, 0, 1, 0)
+    btn.Parent            = TabBar
+    TabButtons[name]      = btn
+end
+
+-- Content area frame + ScrollingFrame
+local ContentFrame = Instance.new("Frame")
+ContentFrame.Name                   = "ContentFrame"
+ContentFrame.BackgroundTransparency = 1
+ContentFrame.Position               = UDim2.new(0.02, 0, 0, 64)
+ContentFrame.Size                   = UDim2.new(0.96, 0, 0, 262)
+ContentFrame.Parent                 = MainFrame
+
+local ScrollingFrame = Instance.new("ScrollingFrame")
+ScrollingFrame.Name                   = "ScrollingFrame"
+ScrollingFrame.BackgroundTransparency = 1
+ScrollingFrame.AutomaticCanvasSize    = Enum.AutomaticSize.Y
+ScrollingFrame.ScrollBarThickness     = 2
+ScrollingFrame.ScrollBarImageColor3   = Color3.new(1, 0.866667, 0)
+ScrollingFrame.ZIndex                 = 2
+ScrollingFrame.Size                   = UDim2.new(1, 0, 1, 0)
+ScrollingFrame.Parent                 = ContentFrame
+
+local ScrollLayout = Instance.new("UIListLayout")
+ScrollLayout.Padding = UDim.new(0, 3)
+ScrollLayout.Parent  = ScrollingFrame
+
+local ScrollPadding = Instance.new("UIPadding")
+ScrollPadding.PaddingTop = UDim.new(0, 2)
+ScrollPadding.Parent     = ScrollingFrame
+
+-- ============================================================
+-- // [4] FUNCTIONALITY // --
+-- ============================================================
+
+-- Helper: create a toggle row inside the ScrollingFrame
+local function createToggleRow(labelText, defaultState)
+    local row = Instance.new("Frame")
+    row.BackgroundColor3     = Color3.new(0.0392157, 0.0392157, 0.0392157)
+    row.BackgroundTransparency = 0.3
+    row.Size                 = UDim2.new(0.96, 0, 0, 28)
+    row.Parent               = ScrollingFrame
+
+    local rowCorner = Instance.new("UICorner")
+    rowCorner.CornerRadius = UDim.new(0, 7)
+    rowCorner.Parent       = row
+
+    local rowStroke = Instance.new("UIStroke")
+    rowStroke.Transparency = 0.7
+    rowStroke.Thickness    = 0.4
+    rowStroke.Parent       = row
+
+    local lbl = Instance.new("TextLabel")
+    lbl.Text                  = labelText
+    lbl.TextColor3            = Color3.new(1, 1, 1)
+    lbl.Font                  = Enum.Font.Gotham
+    lbl.TextSize              = 9
+    lbl.BackgroundTransparency = 1
+    lbl.Position              = UDim2.new(0.03, 0, 0, 0)
+    lbl.Size                  = UDim2.new(0.58, 0, 1, 0)
+    lbl.Parent                = row
+
+    local state = defaultState or false
+
+    local toggleBtn = Instance.new("TextButton")
+    toggleBtn.Text             = state and "ON" or "OFF"
+    toggleBtn.TextColor3       = state and Color3.new(0, 0, 0) or Color3.new(1, 0.866667, 0)
+    toggleBtn.Font             = Enum.Font.GothamBold
+    toggleBtn.TextSize         = 8
+    toggleBtn.BackgroundColor3 = state and Color3.new(1, 0.866667, 0) or Color3.new(0.0980392, 0.0980392, 0.0980392)
+    toggleBtn.Position         = UDim2.new(0.95, -44, 0.5, -9)
+    toggleBtn.Size             = UDim2.new(0, 40, 0, 18)
+    toggleBtn.Parent           = row
+
+    local toggleCorner = Instance.new("UICorner")
+    toggleCorner.CornerRadius = UDim.new(0, 5)
+    toggleCorner.Parent       = toggleBtn
+
+    local toggleStroke = Instance.new("UIStroke")
+    toggleStroke.Transparency = 0.5
+    toggleStroke.Thickness    = 0.7
+    toggleStroke.Parent       = toggleBtn
+
+    toggleBtn.MouseButton1Click:Connect(function()
+        state = not state
+        toggleBtn.Text             = state and "ON" or "OFF"
+        toggleBtn.TextColor3       = state and Color3.new(0, 0, 0) or Color3.new(1, 0.866667, 0)
+        toggleBtn.BackgroundColor3 = state and Color3.new(1, 0.866667, 0) or Color3.new(0.0980392, 0.0980392, 0.0980392)
+    end)
+
+    return row, toggleBtn, function() return state end
+end
+
+-- Helper: create a keybind row
+local function createKeybindRow(labelText, defaultKey)
+    local row = Instance.new("Frame")
+    row.BackgroundColor3       = Color3.new(0.0392157, 0.0392157, 0.0392157)
+    row.BackgroundTransparency = 0.3
+    row.Size                   = UDim2.new(0.96, 0, 0, 28)
+    row.Parent                 = ScrollingFrame
+
+    local rowCorner = Instance.new("UICorner")
+    rowCorner.CornerRadius = UDim.new(0, 7)
+    rowCorner.Parent       = row
+
+    local rowStroke = Instance.new("UIStroke")
+    rowStroke.Transparency = 0.7
+    rowStroke.Thickness    = 0.4
+    rowStroke.Parent       = row
+
+    -- Split bar
+    local splitFrame = Instance.new("Frame")
+    splitFrame.BackgroundColor3       = Color3.new(0.0588235, 0.0588235, 0.0588235)
+    splitFrame.BackgroundTransparency = 0.3
+    splitFrame.Size                   = UDim2.new(0.347, 0, 1, 0)
+    splitFrame.Position               = UDim2.new(0.347, -5, 0.5, -5)
+    splitFrame.Parent                 = row
+
+    local lbl = Instance.new("TextLabel")
+    lbl.Text                  = labelText
+    lbl.TextColor3            = Color3.new(1, 1, 1)
+    lbl.Font                  = Enum.Font.Gotham
+    lbl.TextSize              = 9
+    lbl.BackgroundTransparency = 1
+    lbl.Position              = UDim2.new(0.03, 0, 0, 0)
+    lbl.Size                  = UDim2.new(0.55, 0, 1, 0)
+    lbl.Parent                = row
+
+    local keyBtn = Instance.new("TextButton")
+    keyBtn.Text             = defaultKey
+    keyBtn.TextColor3       = Color3.new(1, 0.866667, 0)
+    keyBtn.Font             = Enum.Font.GothamBold
+    keyBtn.TextSize         = 8
+    keyBtn.BackgroundColor3 = Color3.new(0.0980392, 0.0980392, 0.0980392)
+    keyBtn.Position         = UDim2.new(0.95, -44, 0.5, -8)
+    keyBtn.Size             = UDim2.new(0, 40, 0, 16)
+    keyBtn.Parent           = row
+
+    local keyCorner = Instance.new("UICorner")
+    keyCorner.CornerRadius = UDim.new(0, 5)
+    keyCorner.Parent       = keyBtn
+
+    -- Rebind on click
+    local listening = false
+    keyBtn.MouseButton1Click:Connect(function()
+        if listening then return end
+        listening        = true
+        keyBtn.Text      = "..."
+        keyBtn.TextColor3 = Color3.new(0.6, 0.6, 0.6)
+
+        local conn
+        conn = UserInputService.InputBegan:Connect(function(input, gameProc)
+            if gameProc then return end
+            local keyName = input.KeyCode.Name
+            if keyName and keyName ~= "Unknown" then
+                keyBtn.Text       = keyName:sub(1, 3):upper()
+                keyBtn.TextColor3 = Color3.new(1, 0.866667, 0)
+                listening         = false
+                conn:Disconnect()
+            end
+        end)
+    end)
+
+    return row
+end
+
+-- Helper: create a number input row
+local function createNumericRow(labelText, defaultValue, suffix)
+    suffix = suffix or ""
+    local row = Instance.new("Frame")
+    row.BackgroundColor3       = Color3.new(0.0392157, 0.0392157, 0.0392157)
+    row.BackgroundTransparency = 0.3
+    row.Size                   = UDim2.new(0.96, 0, 0, 28)
+    row.Parent                 = ScrollingFrame
+
+    local rowCorner = Instance.new("UICorner")
+    rowCorner.CornerRadius = UDim.new(0, 7)
+    rowCorner.Parent       = row
+
+    local rowStroke = Instance.new("UIStroke")
+    rowStroke.Transparency = 0.7
+    rowStroke.Thickness    = 0.4
+    rowStroke.Parent       = row
+
+    local lbl = Instance.new("TextLabel")
+    lbl.Text                  = labelText .. ": " .. tostring(defaultValue) .. suffix
+    lbl.TextColor3            = Color3.new(1, 1, 1)
+    lbl.Font                  = Enum.Font.Gotham
+    lbl.TextSize              = 9
+    lbl.BackgroundTransparency = 1
+    lbl.Position              = UDim2.new(0.03, 0, 0, 0)
+    lbl.Size                  = UDim2.new(0.58, 0, 1, 0)
+    lbl.Parent                = row
+
+    local numBox = Instance.new("TextBox")
+    numBox.Text             = tostring(defaultValue)
+    numBox.TextColor3       = Color3.new(1, 0.866667, 0)
+    numBox.Font             = Enum.Font.GothamBold
+    numBox.TextSize         = 9
+    numBox.BackgroundColor3 = Color3.new(0.0980392, 0.0980392, 0.0980392)
+    numBox.ClearTextOnFocus = false
+    numBox.Position         = UDim2.new(0.95, -46, 0.5, -8)
+    numBox.Size             = UDim2.new(0, 42, 0, 16)
+    numBox.Parent           = row
+
+    local numCorner = Instance.new("UICorner")
+    numCorner.CornerRadius = UDim.new(0, 4)
+    numCorner.Parent       = numBox
+
+    numBox.FocusLost:Connect(function()
+        local val = tonumber(numBox.Text)
+        if val then
+            lbl.Text     = labelText .. ": " .. tostring(val) .. suffix
+            numBox.Text  = tostring(val)
+        else
+            numBox.Text  = tostring(defaultValue)
+        end
+    end)
+
+    return row, numBox
+end
+
+-- ---- Populate toggle rows (Combat tab — always visible as default) ---- --
+
+-- Combat
+local _, _, getBatLockUI   = createToggleRow("Bat Lock UI",           false)
+local _, _, getFling        = createToggleRow("Fling",                 false)
+local _, _, getFloat        = createToggleRow("Float",                 false)
+local _, _, getSpeedCustom  = createToggleRow("Speed Custom",          false)
+local _, _, getInfJump      = createToggleRow("Inf Jump",              false)
+local _, _, getAutoDuel     = createToggleRow("Auto Duel",             false)
+local _, _, getAutoRL       = createToggleRow("Auto R / L",            false)
+local _, _, getAutoGrab     = createToggleRow("Auto Grab",             false)
+local _, _, getAutoCorrect  = createToggleRow("Auto Correct Lag",      false)
+local _, _, getAntiRagdoll  = createToggleRow("Anti-Ragdoll",          false)
+local _, _, getVisualPlayer = createToggleRow("Visual Player",         false)
+local _, _, getAutoDisable  = createToggleRow("Auto disable on plot",  false)
+-- Protect
+local _, _, getAntiEffect   = createToggleRow("Anti Effect",           false)
+local _, _, getXrayBase     = createToggleRow("Xray Base",             false)
+local _, _, getUnwalk       = createToggleRow("Unwalk",                false)
+-- Visual
+local _, _, getPlayerESP    = createToggleRow("Player ESP",            false)
+local _, _, getHelicopter   = createToggleRow("Helicopter",            false)
+local _, _, getMobileMode   = createToggleRow("📱 Mobile Mode",        false)
+
+-- Numeric inputs
+createNumericRow("Heli Speed",     10)
+createNumericRow("BatLock Speed",  55)
+createNumericRow("Grab Radius",     7)
+createNumericRow("FOV",            70)
+
+-- Keybind rows
+createKeybindRow("Bat Lock Key",  "X")
+createKeybindRow("Speed Key",     "V")
+createKeybindRow("Inf Jump Key",  "J")
+createKeybindRow("Fling Key",     "F")
+createKeybindRow("Auto Duel Key", "G")
+
+-- ---- Save config button ---- --
+local SaveButton = Instance.new("TextButton")
+SaveButton.Name             = "SaveConfigButton"
+SaveButton.Text             = "SAVE CONFIG"
+SaveButton.TextColor3       = Color3.new(1, 0.866667, 0)
+SaveButton.Font             = Enum.Font.GothamBlack
+SaveButton.TextSize         = 10
+SaveButton.BackgroundColor3 = Color3.new(0.0392157, 0.0392157, 0.0392157)
+SaveButton.Size             = UDim2.new(0.96, 0, 0, 28)
+SaveButton.Parent           = ScrollingFrame
+
+local SaveCorner = Instance.new("UICorner")
+SaveCorner.CornerRadius = UDim.new(0, 7)
+SaveCorner.Parent       = SaveButton
+
+SaveButton.MouseButton1Click:Connect(function()
+    -- Config save logic (writefile if supported by executor)
+    pcall(function()
+        local config = {
+            batLockUI   = getBatLockUI(),
+            fling       = getFling(),
+            float       = getFloat(),
+            speedCustom = getSpeedCustom(),
+            infJump     = getInfJump(),
+            autoDuel    = getAutoDuel(),
+            autoRL      = getAutoRL(),
+            autoGrab    = getAutoGrab(),
+        }
+        writefile("IllusionDev_config.json", HttpService:JSONEncode(config))
+        SaveButton.Text = "SAVED ✓"
+        task.delay(1.5, function() SaveButton.Text = "SAVE CONFIG" end)
+    end)
+end)
+
+-- Hint label
+local HintLabel = Instance.new("TextLabel")
+HintLabel.Text                  = "Press U to toggle GUI | Auto saves every 10s"
+HintLabel.TextColor3            = Color3.new(0.705882, 0.666667, 0.392157)
+HintLabel.Font                  = Enum.Font.Gotham
+HintLabel.TextSize              = 7
+HintLabel.BackgroundTransparency = 1
+HintLabel.Size                  = UDim2.new(0.96, 0, 0, 14)
+HintLabel.Parent                = ScrollingFrame
+
+-- Version label
+local VersionLabel = Instance.new("TextLabel")
+VersionLabel.Text                  = "Illusion Dev v5.4"
+VersionLabel.TextColor3            = Color3.new(0.705882, 0.666667, 0.392157)
+VersionLabel.Font                  = Enum.Font.Gotham
+VersionLabel.TextSize              = 7
+VersionLabel.BackgroundTransparency = 1
+VersionLabel.Size                  = UDim2.new(0.96, 0, 0, 12)
+VersionLabel.Parent                = ScrollingFrame
+
+-- ============================================================
+-- // [5] INITIAL STATE & RUNTIME LOOPS // --
+-- ============================================================
+
+-- Toggle panel open/closed
+local panelVisible = true
+
+local function setPanel(visible)
+    panelVisible    = visible
+    MainFrame.Visible = visible
+    OpenButton.Visible = not visible
+end
+
+CloseButton.MouseButton1Click:Connect(function()
+    setPanel(false)
+end)
+
+OpenButton.MouseButton1Click:Connect(function()
+    setPanel(true)
+end)
+
+-- U key toggles panel
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.KeyCode == Enum.KeyCode.U then
+        setPanel(not panelVisible)
+    end
+end)
+
+-- Jump request pass-through for Inf Jump
+UserInputService.JumpRequest:Connect(function()
+    if getInfJump() then
+        pcall(function()
+            local char = LocalPlayer.Character
+            if char then
+                local hum = char:FindFirstChildOfClass("Humanoid")
+                if hum then hum:ChangeState(Enum.HumanoidStateType.Jumping) end
+            end
+        end)
+    end
+end)
+
+-- Drag support for main panel
+do
+    local dragging, dragInput, dragStart, startPos
+
+    HeaderFrame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1
+           or input.UserInputType == Enum.UserInputType.Touch then
+            dragging  = true
+            dragStart = input.Position
+            startPos  = MainFrame.Position
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
+        end
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement
+                      or input.UserInputType == Enum.UserInputType.Touch) then
+            local delta = input.Position - dragStart
+            MainFrame.Position = UDim2.new(
+                startPos.X.Scale,
+                startPos.X.Offset + delta.X,
+                startPos.Y.Scale,
+                startPos.Y.Offset + delta.Y
+            )
+        end
+    end)
+end
+
+-- Drag support for HUD frame
+do
+    local dragging, dragStart, startPos
+
+    HudFrame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1
+           or input.UserInputType == Enum.UserInputType.Touch then
+            dragging  = true
+            dragStart = input.Position
+            startPos  = HudFrame.Position
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
+        end
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement
+                      or input.UserInputType == Enum.UserInputType.Touch) then
+            local delta = input.Position - dragStart
+            HudFrame.Position = UDim2.new(
+                startPos.X.Scale,
+                startPos.X.Offset + delta.X,
+                startPos.Y.Scale,
+                startPos.Y.Offset + delta.Y
+            )
+        end
+    end)
+end
+
+-- Grab-radius FocusLost sync
+GrabBox.FocusLost:Connect(function()
+    local val = tonumber(GrabBox.Text)
+    if not val then GrabBox.Text = "7" end
+end)
+
+-- HUD Stroke gradient spin + FPS/Ping updater
+local gradientAngle = 0
+local lastFrameTime = tick()
+local frameCount    = 0
+local fps           = 0
+
+RunService.RenderStepped:Connect(function()
+    frameCount = frameCount + 1
+    local now  = tick()
+    if now - lastFrameTime >= 1 then
+        fps           = math.floor(frameCount / (now - lastFrameTime))
+        frameCount    = 0
+        lastFrameTime = now
+    end
+
+    -- Spinning stroke gradient
+    gradientAngle = (gradientAngle + 2) % 360
+    pcall(function() HudStrokeGradient.Rotation = gradientAngle end)
+
+    -- Ping via Stats
+    local ping = 0
+    pcall(function()
+        ping = math.floor(Stats.Network.ServerStatsItem["DataPing"]:GetValue())
+    end)
+
+    FpsPingLabel.Text = "FPS: " .. tostring(fps) .. " | Ping: " .. tostring(ping) .. "ms"
+end)
+
+-- Heartbeat: anti-ragdoll, inf health, walk speed
+RunService.Heartbeat:Connect(function()
+    pcall(function()
+        local char = LocalPlayer.Character
+        if not char then return end
+        local hum = char:FindFirstChildOfClass("Humanoid")
+        if not hum then return end
+
+        -- Godmode keepalive
+        if hum.MaxHealth ~= math.huge then
+            hum.MaxHealth = math.huge
+            hum.Health    = math.huge
+        end
+
+        -- Anti-ragdoll
+        if getAntiRagdoll() then
+            hum:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, false)
+            hum:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
+        end
+    end)
+end)
+
+-- Auto-save every 10 seconds
+task.spawn(function()
+    while task.wait(10) do
+        pcall(function() SaveButton.MouseButton1Click:Fire() end)
+    end
+end)
+
+-- Fade-in animation on load
+task.spawn(function()
+    for i = 1, 10 do
+        local t = i / 10
+        OpenButton.BackgroundTransparency = 0.9 - (0.9 * t)
+        OpenButton.TextTransparency       = 1 - t
+        task.wait(0.05)
+    end
+end)
+
+-- Destroy cleanup
+MainGui.Destroying:Connect(function()
+    HudGui:Destroy()
+end)
+
+print("Illusion Dev v5.4 Loaded!")

@@ -1,0 +1,1968 @@
+local CoreGui = game:GetService("CoreGui")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local Players = game:GetService("Players")
+
+local function Create(className, properties, children)
+    local instance = Instance.new(className)
+    for k, v in pairs(properties or {}) do
+        instance[k] = v
+    end
+    for _, child in pairs(children or {}) do
+        child.Parent = instance
+    end
+    return instance
+end
+
+if CoreGui:FindFirstChild("Thunderous_Duel") then
+    CoreGui.Thunderous_Duel:Destroy()
+end
+
+local ScreenGui = Create("ScreenGui", {
+    Name = "Thunderous_Duel",
+    Parent = CoreGui,
+    ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+})
+
+
+-- // SCAN LINE EFFECT //
+local ScanLine = Create("Frame", {
+    Name = "ScanLine",
+    BackgroundColor3 = Color3.fromRGB(255, 200, 0),
+    BackgroundTransparency = 0.88,
+    BorderSizePixel = 0,
+    Position = UDim2.new(0, 0, -0.05, 0),
+    Size = UDim2.new(1, 0, 0, 3),
+    ZIndex = 7,
+    Parent = ScreenGui
+})
+
+-- Animate scan line sweeping down repeatedly
+local function animateScanLine()
+    ScanLine.Position = UDim2.new(0, 0, -0.05, 0)
+    local scanTween = TweenService:Create(ScanLine, TweenInfo.new(
+        4,
+        Enum.EasingStyle.Linear,
+        Enum.EasingDirection.In
+    ), {
+        Position = UDim2.new(0, 0, 1.05, 0),
+        BackgroundTransparency = 0.96
+    })
+    scanTween:Play()
+    scanTween.Completed:Connect(function()
+        ScanLine.BackgroundTransparency = 0.88
+        animateScanLine()
+    end)
+end
+animateScanLine()
+
+-- ============================================================
+-- // END OF BACKGROUND EFFECTS - ORIGINAL UI BELOW //
+-- ============================================================
+
+local MainContainer = Create("Frame", {
+    Name = "MainContainer",
+    BackgroundTransparency = 1,
+    BorderSizePixel = 0,
+    Position = UDim2.new(0.5, -280, 0.5, -270),
+    Size = UDim2.new(0, 560, 0, 600),
+    Parent = ScreenGui
+})
+
+-- ============================================================
+-- // FLOATING ORBS - INSIDE UI PANEL ONLY //
+-- ============================================================
+
+local OrbContainer = Create("Frame", {
+    Name = "OrbContainer",
+    BackgroundTransparency = 1,
+    BorderSizePixel = 0,
+    Position = UDim2.new(0, 0, 0, 0),
+    Size = UDim2.new(1, 0, 1, 0),
+    ZIndex = 1,
+    ClipsDescendants = false,
+    Parent = MainContainer
+})
+
+local OrbConfigs = {
+    { Size = 70,  Color = Color3.fromRGB(255, 200, 0),  X = 0.08, Y = 0.15, Speed = 0.8,  Phase = 0.0  },
+    { Size = 50,  Color = Color3.fromRGB(255, 220, 50),  X = 0.85, Y = 0.10, Speed = 1.1,  Phase = 1.3  },
+    { Size = 85,  Color = Color3.fromRGB(255, 210, 0),   X = 0.78, Y = 0.78, Speed = 0.65, Phase = 2.7  },
+    { Size = 40,  Color = Color3.fromRGB(255, 230, 100),  X = 0.15, Y = 0.80, Speed = 1.3,  Phase = 0.9  },
+    { Size = 60,  Color = Color3.fromRGB(255, 215, 50),   X = 0.50, Y = 0.45, Speed = 0.55, Phase = 4.1  },
+    { Size = 30,  Color = Color3.fromRGB(255, 225, 80),  X = 0.62, Y = 0.08, Speed = 1.7,  Phase = 2.2  },
+    { Size = 45,  Color = Color3.fromRGB(255, 205, 0),   X = 0.30, Y = 0.52, Speed = 0.9,  Phase = 3.5  },
+    { Size = 25,  Color = Color3.fromRGB(255, 240, 120), X = 0.92, Y = 0.60, Speed = 1.9,  Phase = 1.8  },
+}
+
+local Orbs = {}
+
+for _, cfg in ipairs(OrbConfigs) do
+    local glow = Create("Frame", {
+        BackgroundColor3 = cfg.Color,
+        BackgroundTransparency = 0.82,
+        BorderSizePixel = 0,
+        Position = UDim2.new(cfg.X, -cfg.Size, cfg.Y, -cfg.Size),
+        Size = UDim2.new(0, cfg.Size * 2, 0, cfg.Size * 2),
+        ZIndex = 2,
+        Parent = OrbContainer
+    }, {
+        Create("UICorner", {CornerRadius = UDim.new(1, 0)})
+    })
+
+    local inner = Create("Frame", {
+        BackgroundColor3 = cfg.Color,
+        BackgroundTransparency = 0.55,
+        BorderSizePixel = 0,
+        Position = UDim2.new(0.25, 0, 0.25, 0),
+        Size = UDim2.new(0.5, 0, 0.5, 0),
+        ZIndex = 3,
+        Parent = glow
+    }, {
+        Create("UICorner", {CornerRadius = UDim.new(1, 0)})
+    })
+
+    Create("Frame", {
+        BackgroundColor3 = Color3.new(1, 1, 1),
+        BackgroundTransparency = 0.82,
+        BorderSizePixel = 0,
+        Position = UDim2.new(0.28, 0, 0.28, 0),
+        Size = UDim2.new(0.42, 0, 0.42, 0),
+        ZIndex = 4,
+        Parent = inner
+    }, {
+        Create("UICorner", {CornerRadius = UDim.new(1, 0)})
+    })
+
+    -- Glow pulse
+    local gPulse = TweenService:Create(glow, TweenInfo.new(
+        1.8 + math.random() * 1.5,
+        Enum.EasingStyle.Sine, Enum.EasingDirection.InOut,
+        -1, true
+    ), { BackgroundTransparency = 0.72 })
+    gPulse:Play()
+
+    -- Inner pulse (offset start)
+    task.delay(0.3 + math.random() * 0.7, function()
+        local iPulse = TweenService:Create(inner, TweenInfo.new(
+            1.4 + math.random() * 1.2,
+            Enum.EasingStyle.Sine, Enum.EasingDirection.InOut,
+            -1, true
+        ), { BackgroundTransparency = 0.38 })
+        iPulse:Play()
+    end)
+
+    table.insert(Orbs, {
+        Glow  = glow,
+        BaseX = cfg.X,
+        BaseY = cfg.Y,
+        Size  = cfg.Size,
+        Speed = cfg.Speed,
+        Phase = cfg.Phase,
+    })
+end
+
+-- Animate orbs floating (Heartbeat)
+local orbTime = 0
+RunService.Heartbeat:Connect(function(dt)
+    orbTime = orbTime + dt
+    for _, orb in ipairs(Orbs) do
+        local t = orbTime * orb.Speed + orb.Phase
+        local fx = math.sin(t * 0.38) * 0.055 + math.cos(t * 0.21) * 0.025
+        local fy = math.cos(t * 0.27) * 0.045 + math.sin(t * 0.43) * 0.020
+        orb.Glow.Position = UDim2.new(
+            orb.BaseX + fx, -orb.Size,
+            orb.BaseY + fy, -orb.Size
+        )
+    end
+end)
+
+-- ============================================================
+
+local ContentFrame = Create("Frame", {
+    Name = "ContentFrame",
+    BackgroundColor3 = Color3.fromRGB(40, 35, 5),
+    BorderSizePixel = 0,
+    Position = UDim2.new(0, 0, 0, 0),
+    Size = UDim2.new(1, 0, 1, 0),
+    Parent = MainContainer
+}, {
+    Create("UICorner", {CornerRadius = UDim.new(0, 12)}),
+    Create("UIGradient", {
+        Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 200, 0)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(200, 150, 0)),
+        }),
+        Rotation = 160
+    }),
+    Create("UIStroke", {
+        Color = Color3.fromRGB(255, 220, 0),
+        Thickness = 2,
+        ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    })
+})
+
+-- Title Label at top with FPS and PING
+local TitleLabel = Create("TextLabel", {
+    Name = "TitleLabel",
+    BackgroundTransparency = 1,
+    Position = UDim2.new(0, 0, 0, 10),
+    Size = UDim2.new(1, 0, 0, 35),
+    Font = Enum.Font.GothamBlack,
+    Text = "AKIN HUB│FPS: 0 PING: 0",
+    TextColor3 = Color3.fromRGB(255, 240, 100),
+    TextSize = 18,
+    TextXAlignment = Enum.TextXAlignment.Center,
+    Parent = ContentFrame
+})
+
+-- Update FPS and PING in title
+local lastFPSUpdate = tick()
+local frameCount = 0
+
+RunService.RenderStepped:Connect(function()
+    frameCount = frameCount + 1
+    local currentTime = tick()
+    
+    -- Update FPS every 0.5 seconds
+    if currentTime - lastFPSUpdate >= 0.5 then
+        local fps = math.floor(frameCount / (currentTime - lastFPSUpdate))
+        frameCount = 0
+        lastFPSUpdate = currentTime
+        
+        -- Get ping from stats
+        local ping = 0
+        pcall(function()
+            ping = game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValue()
+            ping = math.floor(ping)
+        end)
+        
+        TitleLabel.Text = "AKIN HUB│FPS: " .. fps .. " PING: " .. ping
+    end
+end)
+
+-- Title shimmer animation
+local shimmerTween = TweenService:Create(TitleLabel, TweenInfo.new(
+    1.8,
+    Enum.EasingStyle.Sine,
+    Enum.EasingDirection.InOut,
+    -1,
+    true
+), {
+    TextColor3 = Color3.fromRGB(255, 255, 150)
+})
+shimmerTween:Play()
+
+-- Main horizontal layout container (splits into 2 columns)
+local MainLayoutFrame = Create("Frame", {
+    Name = "MainLayoutFrame",
+    BackgroundTransparency = 1,
+    BorderSizePixel = 0,
+    Position = UDim2.new(0, 10, 0, 55),
+    Size = UDim2.new(1, -20, 1, -75),
+    Parent = ContentFrame
+}, {
+    Create("UIGridLayout", {
+        CellSize = UDim2.new(0.5, -6, 1, 0),
+        CellPadding = UDim2.new(0, 12, 0, 0),
+        SortOrder = Enum.SortOrder.LayoutOrder,
+        FillDirection = Enum.FillDirection.Horizontal
+    })
+})
+
+-- LEFT COLUMN - MOVEMENTS
+local MainFrame1 = Create("Frame", {
+    Name = "MainFrame1",
+    BackgroundColor3 = Color3.fromRGB(40, 35, 5),
+    BorderSizePixel = 0,
+    Parent = MainLayoutFrame
+}, {
+    Create("UICorner", {CornerRadius = UDim.new(0, 12)}),
+    Create("UIGradient", {
+        Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 200, 0)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(200, 150, 0)),
+        }),
+        Rotation = 160
+    }),
+    Create("UIStroke", {
+        Color = Color3.fromRGB(255, 220, 0),
+        Thickness = 2,
+        ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    })
+})
+
+-- Scrollable container for left column
+local ScrollFrame1 = Create("ScrollingFrame", {
+    Name = "ScrollFrame1",
+    BackgroundTransparency = 1,
+    BorderSizePixel = 0,
+    Position = UDim2.new(0, 0, 0, 0),
+    Size = UDim2.new(1, 0, 1, 0),
+    CanvasSize = UDim2.new(1, 0, 0, 0),
+    ScrollBarThickness = 6,
+    Parent = MainFrame1
+}, {
+    Create("UIListLayout", {
+        Padding = UDim.new(0, 8),
+        SortOrder = Enum.SortOrder.LayoutOrder,
+        FillDirection = Enum.FillDirection.Vertical
+    })
+})
+
+local Content1 = Create("Frame", {
+    Name = "Content1",
+    BackgroundTransparency = 1,
+    Size = UDim2.new(1, 0, 0, 0),
+    Parent = ScrollFrame1
+}, {
+    Create("UIListLayout", {
+        Padding = UDim.new(0, 8),
+        SortOrder = Enum.SortOrder.LayoutOrder
+    })
+})
+
+-- SPEED CUSTOMIZER SETUP
+local Speed = {
+    Enabled = false,
+    SpeedValue = 58,
+    StealValue = 29,
+    JumpValue = 80,
+    HB = nil
+}
+
+local speedFrame = Create("Frame", {
+    Name = "MovementCustomizer",
+    BackgroundColor3 = Color3.fromRGB(40, 35, 5),
+    BorderSizePixel = 0,
+    Size = UDim2.new(1, 0, 0, 200),
+    Parent = Content1
+}, {
+    Create("UICorner", {CornerRadius = UDim.new(0, 8)}),
+    Create("UIGradient", {
+        Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 210, 80)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(200, 150, 0)),
+        }),
+        Rotation = 135
+    }),
+    Create("UIStroke", {
+        Color = Color3.fromRGB(255, 220, 0),
+        Thickness = 1,
+        Transparency = 0.3
+    })
+})
+
+Create("TextLabel", {
+    BackgroundTransparency = 1,
+    Position = UDim2.new(0, 10, 0, 8),
+    Size = UDim2.new(0.6, 0, 0, 25),
+    Font = Enum.Font.GothamBold,
+    Text = "Movement Customizer",
+    TextColor3 = Color3.fromRGB(255, 255, 150),
+    TextSize = 14,
+    TextXAlignment = Enum.TextXAlignment.Left,
+    Parent = speedFrame
+})
+
+local toggleBtn = Create("TextButton", {
+    BackgroundColor3 = Color3.fromRGB(100, 100, 100),
+    Position = UDim2.new(1, -65, 0, 8),
+    Size = UDim2.new(0, 55, 0, 25),
+    Font = Enum.Font.GothamBold,
+    Text = "",
+    TextColor3 = Color3.new(1, 1, 1),
+    TextSize = 12,
+    Parent = speedFrame
+}, {
+    Create("UICorner", {CornerRadius = UDim.new(1, 0)}),
+})
+
+-- Toggle switch circle
+local toggleCircle = Create("Frame", {
+    Name = "ToggleCircle",
+    BackgroundColor3 = Color3.new(1, 1, 1),
+    Position = UDim2.new(0, 2, 0.5, -10),
+    Size = UDim2.new(0, 21, 0, 21),
+    Parent = toggleBtn
+}, {
+    Create("UICorner", {CornerRadius = UDim.new(1, 0)})
+})
+
+-- SPEED SLIDERS
+local function createSlider(label, min, max, default, yPos, callback)
+    Create("TextLabel", {
+        BackgroundTransparency = 1,
+        Position = UDim2.new(0, 10, 0, yPos),
+        Size = UDim2.new(0.4, 0, 0, 20),
+        Font = Enum.Font.GothamBold,
+        Text = label,
+        TextColor3 = Color3.fromRGB(255, 255, 150),
+        TextSize = 12,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        Parent = speedFrame
+    })
+    
+    local valueLabel = Create("TextLabel", {
+        BackgroundTransparency = 1,
+        Position = UDim2.new(1, -50, 0, yPos),
+        Size = UDim2.new(0, 40, 0, 20),
+        Font = Enum.Font.GothamBold,
+        Text = tostring(default),
+        TextColor3 = Color3.fromRGB(255, 200, 0),
+        TextSize = 12,
+        TextXAlignment = Enum.TextXAlignment.Center,
+        Parent = speedFrame
+    })
+    
+    local sliderBg = Create("Frame", {
+        BackgroundColor3 = Color3.fromRGB(50, 40, 0),
+        Position = UDim2.new(0, 10, 0, yPos + 22),
+        Size = UDim2.new(1, -20, 0, 12),
+        Parent = speedFrame
+    }, {
+        Create("UICorner", {CornerRadius = UDim.new(1, 0)})
+    })
+    
+    local sliderFill = Create("Frame", {
+        BackgroundColor3 = Color3.fromRGB(255, 200, 0),
+        Size = UDim2.new((default - min) / (max - min), 0, 1, 0),
+        Parent = sliderBg
+    }, {
+        Create("UICorner", {CornerRadius = UDim.new(1, 0)})
+    })
+    
+    local sliderKnob = Create("Frame", {
+        BackgroundColor3 = Color3.fromRGB(255, 220, 0),
+        Position = UDim2.new((default - min) / (max - min), -6, 0.5, -7),
+        Size = UDim2.new(0, 14, 0, 14),
+        Parent = sliderBg
+    }, {
+        Create("UICorner", {CornerRadius = UDim.new(1, 0)})
+    })
+    
+    local dragging = false
+    
+    local function updateSlider(input)
+        local relativeX = (input.Position.X - sliderBg.AbsolutePosition.X) / sliderBg.AbsoluteSize.X
+        relativeX = math.clamp(relativeX, 0, 1)
+        local value = math.floor(min + relativeX * (max - min))
+        
+        sliderFill.Size = UDim2.new(relativeX, 0, 1, 0)
+        sliderKnob.Position = UDim2.new(relativeX, -6, 0.5, -7)
+        valueLabel.Text = tostring(value)
+        callback(value)
+    end
+    
+    sliderBg.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            updateSlider(input)
+        end
+    end)
+    
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            updateSlider(input)
+        end
+    end)
+    
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false
+        end
+    end)
+end
+
+createSlider("Speed", 1, 200, Speed.SpeedValue, 40, function(val) Speed.SpeedValue = val end)
+createSlider("Steal Speed", 1, 200, Speed.StealValue, 95, function(val) Speed.StealValue = val end)
+createSlider("Jump Power", 1, 150, Speed.JumpValue, 150, function(val) Speed.JumpValue = val end)
+
+-- // INFINITE JUMP //
+local InfiniteJumpState = false
+local InfiniteJumpConn = nil
+local JUMP_POWER = 50
+local COOLDOWN = 0.15
+local lastJump = 0
+
+local infJumpFrame = Create("Frame", {
+    Name = "InfiniteJump",
+    BackgroundColor3 = Color3.fromRGB(40, 35, 5),
+    BorderSizePixel = 0,
+    Size = UDim2.new(1, 0, 0, 50),
+    Parent = Content1
+}, {
+    Create("UICorner", {CornerRadius = UDim.new(0, 8)}),
+    Create("UIGradient", {
+        Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 210, 80)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(200, 150, 0)),
+        }),
+        Rotation = 135
+    }),
+    Create("UIStroke", {
+        Color = Color3.fromRGB(255, 220, 0),
+        Thickness = 1,
+        Transparency = 0.3
+    })
+})
+
+Create("TextLabel", {
+    BackgroundTransparency = 1,
+    Position = UDim2.new(0, 10, 0, 5),
+    Size = UDim2.new(0.6, 0, 0, 20),
+    Font = Enum.Font.GothamBold,
+    Text = "Infinite Jump",
+    TextColor3 = Color3.fromRGB(255, 255, 150),
+    TextSize = 12,
+    TextXAlignment = Enum.TextXAlignment.Left,
+    Parent = infJumpFrame
+})
+
+local infJumpToggleBtn = Create("TextButton", {
+    BackgroundColor3 = Color3.fromRGB(100, 100, 100),
+    Position = UDim2.new(1, -65, 0, 5),
+    Size = UDim2.new(0, 55, 0, 25),
+    Font = Enum.Font.GothamBold,
+    Text = "",
+    TextColor3 = Color3.new(0, 0, 0),
+    TextSize = 11,
+    Parent = infJumpFrame
+}, {
+    Create("UICorner", {CornerRadius = UDim.new(1, 0)})
+})
+
+-- Toggle switch circle
+local infJumpCircle = Create("Frame", {
+    Name = "ToggleCircle",
+    BackgroundColor3 = Color3.new(1, 1, 1),
+    Position = UDim2.new(0, 2, 0.5, -10),
+    Size = UDim2.new(0, 21, 0, 21),
+    Parent = infJumpToggleBtn
+}, {
+    Create("UICorner", {CornerRadius = UDim.new(1, 0)})
+})
+
+infJumpToggleBtn.MouseButton1Click:Connect(function()
+    InfiniteJumpState = not InfiniteJumpState
+    
+    if InfiniteJumpState then
+        infJumpToggleBtn.BackgroundColor3 = Color3.fromRGB(255, 200, 0)
+        local moveTween = TweenService:Create(infJumpCircle, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Position = UDim2.new(0, 32, 0.5, -10)})
+        moveTween:Play()
+        print("✓ Infinite Jump: ENABLED")
+        
+        if InfiniteJumpConn then InfiniteJumpConn:Disconnect() end
+        InfiniteJumpConn = UserInputService.JumpRequest:Connect(function()
+            if not InfiniteJumpState then return end
+            local char = Players.LocalPlayer.Character
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            local hum = char and char:FindFirstChildOfClass("Humanoid")
+            
+            if hrp and hum then
+                if hum.FloorMaterial == Enum.Material.Air then
+                    local now = tick()
+                    if now - lastJump >= COOLDOWN then
+                        lastJump = now
+                        hrp.Velocity = Vector3.new(hrp.Velocity.X, JUMP_POWER, hrp.Velocity.Z)
+                    end
+                end
+            end
+        end)
+    else
+        infJumpToggleBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+        local moveTween = TweenService:Create(infJumpCircle, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Position = UDim2.new(0, 2, 0.5, -10)})
+        moveTween:Play()
+        print("✗ Infinite Jump: DISABLED")
+        if InfiniteJumpConn then InfiniteJumpConn:Disconnect() InfiniteJumpConn = nil end
+    end
+end)
+
+-- // UNWALK //
+local NoAnimState = false
+local NoAnimConnections = {}
+
+local noAnimFrame = Create("Frame", {
+    Name = "Unwalk",
+    BackgroundColor3 = Color3.fromRGB(40, 35, 5),
+    BorderSizePixel = 0,
+    Size = UDim2.new(1, 0, 0, 50),
+    Parent = Content1
+}, {
+    Create("UICorner", {CornerRadius = UDim.new(0, 8)}),
+    Create("UIGradient", {
+        Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 210, 80)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(200, 150, 0)),
+        }),
+        Rotation = 135
+    }),
+    Create("UIStroke", {
+        Color = Color3.fromRGB(255, 220, 0),
+        Thickness = 1,
+        Transparency = 0.3
+    })
+})
+
+Create("TextLabel", {
+    BackgroundTransparency = 1,
+    Position = UDim2.new(0, 10, 0, 5),
+    Size = UDim2.new(0.6, 0, 0, 20),
+    Font = Enum.Font.GothamBold,
+    Text = "Unwalk",
+    TextColor3 = Color3.fromRGB(255, 255, 150),
+    TextSize = 12,
+    TextXAlignment = Enum.TextXAlignment.Left,
+    Parent = noAnimFrame
+})
+
+local noAnimToggleBtn = Create("TextButton", {
+    BackgroundColor3 = Color3.fromRGB(100, 100, 100),
+    Position = UDim2.new(1, -65, 0, 5),
+    Size = UDim2.new(0, 55, 0, 25),
+    Font = Enum.Font.GothamBold,
+    Text = "",
+    TextColor3 = Color3.new(0, 0, 0),
+    TextSize = 11,
+    Parent = noAnimFrame
+}, {
+    Create("UICorner", {CornerRadius = UDim.new(1, 0)})
+})
+
+-- Toggle switch circle
+local noAnimCircle = Create("Frame", {
+    Name = "ToggleCircle",
+    BackgroundColor3 = Color3.new(1, 1, 1),
+    Position = UDim2.new(0, 2, 0.5, -10),
+    Size = UDim2.new(0, 21, 0, 21),
+    Parent = noAnimToggleBtn
+}, {
+    Create("UICorner", {CornerRadius = UDim.new(1, 0)})
+})
+
+local function disableAnims(character)
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    if not humanoid then return end
+
+    for _, track in pairs(humanoid:GetPlayingAnimationTracks()) do
+        track:Stop()
+    end
+
+    if NoAnimConnections[character] then
+        NoAnimConnections[character]:Disconnect()
+    end
+    
+    NoAnimConnections[character] = humanoid.AnimationPlayed:Connect(function(track)
+        track:Stop()
+    end)
+end
+
+noAnimToggleBtn.MouseButton1Click:Connect(function()
+    NoAnimState = not NoAnimState
+    
+    if NoAnimState then
+        noAnimToggleBtn.BackgroundColor3 = Color3.fromRGB(255, 200, 0)
+        local moveTween = TweenService:Create(noAnimCircle, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Position = UDim2.new(0, 32, 0.5, -10)})
+        moveTween:Play()
+        print("✓ Unwalk: ENABLED")
+        
+        local char = Players.LocalPlayer.Character
+        if char then
+            disableAnims(char)
+        end
+        
+        if NoAnimConnections.characterAdded then
+            NoAnimConnections.characterAdded:Disconnect()
+        end
+        NoAnimConnections.characterAdded = Players.LocalPlayer.CharacterAdded:Connect(function(newChar)
+            disableAnims(newChar)
+        end)
+    else
+        noAnimToggleBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+        local moveTween = TweenService:Create(noAnimCircle, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Position = UDim2.new(0, 2, 0.5, -10)})
+        moveTween:Play()
+        print("✗ Unwalk: DISABLED")
+        
+        if NoAnimConnections.characterAdded then
+            NoAnimConnections.characterAdded:Disconnect()
+            NoAnimConnections.characterAdded = nil
+        end
+        
+        for character, conn in pairs(NoAnimConnections) do
+            if character ~= "characterAdded" then
+                conn:Disconnect()
+                NoAnimConnections[character] = nil
+            end
+        end
+    end
+end)
+
+-- // ANTI RAGDOLL //
+local ragdollDisabled = false
+local ragdollDisableFunc = nil
+local antiRagdollActive = false
+
+local antiRagFrame = Create("Frame", {
+    Name = "AntiRagdoll",
+    BackgroundColor3 = Color3.fromRGB(40, 35, 5),
+    BorderSizePixel = 0,
+    Size = UDim2.new(1, 0, 0, 50),
+    Parent = Content1
+}, {
+    Create("UICorner", {CornerRadius = UDim.new(0, 8)}),
+    Create("UIGradient", {
+        Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 210, 80)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(200, 150, 0)),
+        }),
+        Rotation = 135
+    }),
+    Create("UIStroke", {
+        Color = Color3.fromRGB(255, 220, 0),
+        Thickness = 1,
+        Transparency = 0.3
+    })
+})
+
+Create("TextLabel", {
+    BackgroundTransparency = 1,
+    Position = UDim2.new(0, 10, 0, 5),
+    Size = UDim2.new(0.6, 0, 0, 20),
+    Font = Enum.Font.GothamBold,
+    Text = "Anti Ragdoll",
+    TextColor3 = Color3.fromRGB(255, 255, 150),
+    TextSize = 12,
+    TextXAlignment = Enum.TextXAlignment.Left,
+    Parent = antiRagFrame
+})
+
+local antiRagToggleBtn = Create("TextButton", {
+    BackgroundColor3 = Color3.fromRGB(100, 100, 100),
+    Position = UDim2.new(1, -65, 0, 5),
+    Size = UDim2.new(0, 55, 0, 25),
+    Font = Enum.Font.GothamBold,
+    Text = "",
+    TextColor3 = Color3.new(0, 0, 0),
+    TextSize = 11,
+    Parent = antiRagFrame
+}, {
+    Create("UICorner", {CornerRadius = UDim.new(1, 0)})
+})
+
+-- Toggle switch circle
+local antiRagCircle = Create("Frame", {
+    Name = "ToggleCircle",
+    BackgroundColor3 = Color3.new(1, 1, 1),
+    Position = UDim2.new(0, 2, 0.5, -10),
+    Size = UDim2.new(0, 21, 0, 21),
+    Parent = antiRagToggleBtn
+}, {
+    Create("UICorner", {CornerRadius = UDim.new(1, 0)})
+})
+
+local function initAntiRagdoll()
+    local ReplicatedStorage = game:GetService("ReplicatedStorage")
+    local ok, ragdollRemote = pcall(function()
+        return ReplicatedStorage:WaitForChild("Packages", 5)
+            :WaitForChild("Ragdoll", 5)
+            :WaitForChild("Ragdoll", 5)
+    end)
+    if not ok or not ragdollRemote then
+        warn("Anti Ragdoll: Could not find Ragdoll remote")
+        return nil
+    end
+
+    local PlayerModule = require(Players.LocalPlayer:WaitForChild("PlayerScripts"):WaitForChild("PlayerModule"))
+    local Controls = PlayerModule:GetControls()
+    local updating = false
+
+    local function getRoot()
+        return Players.LocalPlayer.Character and Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    end
+
+    local function forceEnableControls(duration)
+        local start = tick()
+        RunService.RenderStepped:Connect(function()
+            if ragdollDisabled or tick() - start > duration then return end
+            Controls:Enable()
+        end)
+    end
+
+    local function addLinearVelocity()
+        if ragdollDisabled then return end
+        local root = getRoot()
+        local humanoid = Players.LocalPlayer.Character and Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+        if not root or not humanoid then return end
+
+        if not root:FindFirstChild("AntiRagdollLV") then
+            local attachment = Instance.new("Attachment")
+            attachment.Name = "AntiRagdollAttachment"
+            attachment.Parent = root
+            local lv = Instance.new("LinearVelocity")
+            lv.Name = "AntiRagdollLV"
+            lv.Attachment0 = attachment
+            lv.MaxForce = math.huge
+            lv.RelativeTo = Enum.ActuatorRelativeTo.World
+            lv.VectorVelocity = Vector3.zero
+            lv.Parent = root
+        end
+
+        forceEnableControls(0.1)
+        humanoid:ChangeState(Enum.HumanoidStateType.Freefall)
+
+        if not updating then
+            updating = true
+            task.spawn(function()
+                while not ragdollDisabled and Players.LocalPlayer:GetAttribute("RagdollEndTime") and getRoot() and getRoot():FindFirstChild("AntiRagdollLV") do
+                    local root2 = getRoot()
+                    local hum2 = Players.LocalPlayer.Character and Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+                    local lv = root2 and root2:FindFirstChild("AntiRagdollLV")
+                    if lv and hum2 then
+                        local dir = hum2.MoveDirection
+                        lv.VectorVelocity = dir.Magnitude > 0.1 and (dir.Unit * hum2.WalkSpeed) or Vector3.zero
+                    end
+                    task.wait(0.05)
+                end
+                updating = false
+            end)
+        end
+    end
+
+    local function removeLinearVelocity()
+        local root = getRoot()
+        if not root then return end
+        local lv = root:FindFirstChild("AntiRagdollLV")
+        if lv then lv:Destroy() end
+        local att = root:FindFirstChild("AntiRagdollAttachment")
+        if att then att:Destroy() end
+    end
+
+    Players.LocalPlayer.AttributeChanged:Connect(function(attr)
+        if ragdollDisabled then return end
+        if attr == "RagdollEndTime" then
+            if Players.LocalPlayer:GetAttribute("RagdollEndTime") then
+                addLinearVelocity()
+            else
+                removeLinearVelocity()
+            end
+        end
+    end)
+
+    ragdollRemote.OnClientEvent:Connect(function(p1, p2)
+        if ragdollDisabled then return end
+        if p1 == "Destroy" or p2 == "manualD" then
+            removeLinearVelocity()
+        end
+    end)
+
+    return function()
+        ragdollDisabled = true
+        removeLinearVelocity()
+    end
+end
+
+antiRagToggleBtn.MouseButton1Click:Connect(function()
+    antiRagdollActive = not antiRagdollActive
+
+    if antiRagdollActive then
+        antiRagToggleBtn.BackgroundColor3 = Color3.fromRGB(255, 200, 0)
+        local moveTween = TweenService:Create(antiRagCircle, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Position = UDim2.new(0, 32, 0.5, -10)})
+        moveTween:Play()
+        ragdollDisabled = false
+        ragdollDisableFunc = initAntiRagdoll()
+        print("✓ Anti Ragdoll: ENABLED")
+    else
+        antiRagToggleBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+        local moveTween = TweenService:Create(antiRagCircle, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Position = UDim2.new(0, 2, 0.5, -10)})
+        moveTween:Play()
+        if ragdollDisableFunc then ragdollDisableFunc() end
+        ragdollDisabled = true
+        ragdollDisableFunc = nil
+        print("✗ Anti Ragdoll: DISABLED")
+    end
+end)
+
+-- TOGGLE BUTTON
+toggleBtn.MouseButton1Click:Connect(function()
+    Speed.Enabled = not Speed.Enabled
+    
+    if Speed.Enabled then
+        toggleBtn.BackgroundColor3 = Color3.fromRGB(255, 200, 0)
+        local moveTween = TweenService:Create(toggleCircle, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Position = UDim2.new(0, 32, 0.5, -10)})
+        moveTween:Play()
+        print("✓ SPEED ENABLED")
+        
+        if Speed.HB then Speed.HB:Disconnect() end
+        Speed.HB = RunService.Heartbeat:Connect(function()
+            if not Speed.Enabled then return end
+            local char = Players.LocalPlayer.Character
+            if not char then return end
+            local hrp = char:FindFirstChild("HumanoidRootPart")
+            local hum = char:FindFirstChild("Humanoid")
+            if not hrp or not hum then return end
+            
+            local moveDir = hum.MoveDirection
+            if moveDir.Magnitude > 0 then
+                local speed = (hum.WalkSpeed < 25) and Speed.StealValue or Speed.SpeedValue
+                hrp.AssemblyLinearVelocity = Vector3.new(moveDir.X * speed, hrp.AssemblyLinearVelocity.Y, moveDir.Z * speed)
+            end
+        end)
+    else
+        toggleBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+        local moveTween = TweenService:Create(toggleCircle, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Position = UDim2.new(0, 2, 0.5, -10)})
+        moveTween:Play()
+        print("✗ SPEED DISABLED")
+        if Speed.HB then Speed.HB:Disconnect() Speed.HB = nil end
+    end
+end)
+
+-- RIGHT COLUMN - MISC SETTINGS
+local MainFrame2 = Create("Frame", {
+    Name = "MainFrame2",
+    BackgroundColor3 = Color3.fromRGB(40, 35, 5),
+    BorderSizePixel = 0,
+    Parent = MainLayoutFrame
+}, {
+    Create("UICorner", {CornerRadius = UDim.new(0, 12)}),
+    Create("UIGradient", {
+        Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 200, 0)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(200, 150, 0)),
+        }),
+        Rotation = 20
+    }),
+    Create("UIStroke", {
+        Color = Color3.fromRGB(255, 220, 0),
+        Thickness = 2,
+        ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    })
+})
+
+-- Scrollable container for right column
+local ScrollFrame2 = Create("ScrollingFrame", {
+    Name = "ScrollFrame2",
+    BackgroundTransparency = 1,
+    BorderSizePixel = 0,
+    Position = UDim2.new(0, 0, 0, 0),
+    Size = UDim2.new(1, 0, 1, 0),
+    CanvasSize = UDim2.new(1, 0, 0, 0),
+    ScrollBarThickness = 6,
+    Parent = MainFrame2
+}, {
+    Create("UIListLayout", {
+        Padding = UDim.new(0, 8),
+        SortOrder = Enum.SortOrder.LayoutOrder,
+        FillDirection = Enum.FillDirection.Vertical
+    })
+})
+
+local Content2 = Create("Frame", {
+    Name = "Content2",
+    BackgroundTransparency = 1,
+    Size = UDim2.new(1, 0, 0, 0),
+    Parent = ScrollFrame2
+}, {
+    Create("UIListLayout", {
+        Padding = UDim.new(0, 8),
+        SortOrder = Enum.SortOrder.LayoutOrder
+    })
+})
+
+-- // HELPER FUNCTIONS //
+local function getWeapon() 
+    return Players.LocalPlayer.Backpack:FindFirstChild("Bat") or (Players.LocalPlayer.Character and Players.LocalPlayer.Character:FindFirstChild("Bat")) 
+end
+
+local function createMiscToggle(parent, labelText, callback)
+    local frame = Create("Frame", {
+        Name = labelText,
+        BackgroundColor3 = Color3.fromRGB(40, 35, 5),
+        BorderSizePixel = 0,
+        Size = UDim2.new(1, 0, 0, 50),
+        Parent = parent
+    }, {
+        Create("UICorner", {CornerRadius = UDim.new(0, 8)}),
+        Create("UIGradient", {
+            Color = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 210, 80)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(200, 150, 0)),
+            }),
+            Rotation = 90
+        }),
+        Create("UIStroke", {
+            Color = Color3.fromRGB(255, 220, 0),
+            Thickness = 1,
+            Transparency = 0.3
+        })
+    })
+    
+    Create("TextLabel", {
+        BackgroundTransparency = 1,
+        Position = UDim2.new(0, 10, 0, 5),
+        Size = UDim2.new(0.6, 0, 0, 20),
+        Font = Enum.Font.GothamBold,
+        Text = labelText,
+        TextColor3 = Color3.fromRGB(255, 255, 150),
+        TextSize = 12,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        Parent = frame
+    })
+    
+    local toggleBtn = Create("TextButton", {
+        BackgroundColor3 = Color3.fromRGB(100, 100, 100),
+        Position = UDim2.new(1, -65, 0, 5),
+        Size = UDim2.new(0, 55, 0, 25),
+        Font = Enum.Font.GothamBold,
+        Text = "",
+        TextColor3 = Color3.new(1, 1, 1),
+        TextSize = 11,
+        Parent = frame
+    }, {
+        Create("UICorner", {CornerRadius = UDim.new(1, 0)})
+    })
+    
+    -- Toggle switch circle
+    local toggleCircle = Create("Frame", {
+        Name = "ToggleCircle",
+        BackgroundColor3 = Color3.new(1, 1, 1),
+        Position = UDim2.new(0, 2, 0.5, -10),
+        Size = UDim2.new(0, 21, 0, 21),
+        Parent = toggleBtn
+    }, {
+        Create("UICorner", {CornerRadius = UDim.new(1, 0)})
+    })
+    
+    toggleBtn.MouseButton1Click:Connect(function()
+        local newState = not (toggleCircle.Position.X.Offset > 20)
+        if newState then
+            toggleBtn.BackgroundColor3 = Color3.fromRGB(255, 200, 0)
+            local moveTween = TweenService:Create(toggleCircle, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Position = UDim2.new(0, 32, 0.5, -10)})
+            moveTween:Play()
+        else
+            toggleBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+            local moveTween = TweenService:Create(toggleCircle, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Position = UDim2.new(0, 2, 0.5, -10)})
+            moveTween:Play()
+        end
+        callback(newState)
+    end)
+    
+    return frame, toggleBtn
+end
+
+-- // AUTO BAT //
+local AutoBatState = false
+local AutoBatConn = nil
+
+createMiscToggle(Content2, "Bat fucker", function(enabled)
+    AutoBatState = enabled
+    if enabled then
+        if AutoBatConn then AutoBatConn:Disconnect() end
+        AutoBatConn = RunService.Heartbeat:Connect(function()
+            if not AutoBatState then return end
+            local c = Players.LocalPlayer.Character
+            local b = getWeapon()
+            if b and c and c:FindFirstChild("Humanoid") then
+                if b.Parent ~= c then c.Humanoid:EquipTool(b) end
+                pcall(function() b:Activate() end)
+            end
+        end)
+        print("✓ Auto Bat: ENABLED")
+    else
+        if AutoBatConn then AutoBatConn:Disconnect() AutoBatConn = nil end
+        print("✗ Auto Bat: DISABLED")
+    end
+end)
+
+-- // HELICOPTER (SPINBOT) //
+local HelicopterState = false
+local spinBAV = nil
+local SpinSpeed = 30
+
+-- Helicopter panel frame (toggle + speed slider in one card)
+local heliFrame = Create("Frame", {
+    Name = "Rotate",
+    BackgroundColor3 = Color3.fromRGB(40, 35, 5),
+    BorderSizePixel = 0,
+    Size = UDim2.new(1, 0, 0, 90),
+    Parent = Content2
+}, {
+    Create("UICorner", {CornerRadius = UDim.new(0, 8)}),
+    Create("UIGradient", {
+        Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 210, 80)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(200, 150, 0)),
+        }),
+        Rotation = 135
+    }),
+    Create("UIStroke", {
+        Color = Color3.fromRGB(255, 220, 0),
+        Thickness = 1,
+        Transparency = 0.3
+    })
+})
+
+Create("TextLabel", {
+    BackgroundTransparency = 1,
+    Position = UDim2.new(0, 10, 0, 5),
+    Size = UDim2.new(0.6, 0, 0, 20),
+    Font = Enum.Font.GothamBold,
+    Text = "Rotate",
+    TextColor3 = Color3.fromRGB(255, 255, 150),
+    TextSize = 12,
+    TextXAlignment = Enum.TextXAlignment.Left,
+    Parent = heliFrame
+})
+
+local heliToggleBtn = Create("TextButton", {
+    BackgroundColor3 = Color3.fromRGB(100, 100, 100),
+    Position = UDim2.new(1, -65, 0, 5),
+    Size = UDim2.new(0, 55, 0, 25),
+    Font = Enum.Font.GothamBold,
+    Text = "",
+    TextColor3 = Color3.new(0, 0, 0),
+    TextSize = 11,
+    Parent = heliFrame
+}, {
+    Create("UICorner", {CornerRadius = UDim.new(1, 0)})
+})
+
+-- Toggle switch circle
+local heliCircle = Create("Frame", {
+    Name = "ToggleCircle",
+    BackgroundColor3 = Color3.new(1, 1, 1),
+    Position = UDim2.new(0, 2, 0.5, -10),
+    Size = UDim2.new(0, 21, 0, 21),
+    Parent = heliToggleBtn
+}, {
+    Create("UICorner", {CornerRadius = UDim.new(1, 0)})
+})
+
+-- Speed label
+Create("TextLabel", {
+    BackgroundTransparency = 1,
+    Position = UDim2.new(0, 10, 0, 33),
+    Size = UDim2.new(0.45, 0, 0, 18),
+    Font = Enum.Font.GothamBold,
+    Text = "Rotation Speed",
+    TextColor3 = Color3.fromRGB(255, 255, 150),
+    TextSize = 11,
+    TextXAlignment = Enum.TextXAlignment.Left,
+    Parent = heliFrame
+})
+
+-- Speed value readout
+local heliSpeedLabel = Create("TextLabel", {
+    BackgroundTransparency = 1,
+    Position = UDim2.new(0.55, 0, 0, 33),
+    Size = UDim2.new(0.35, 0, 0, 18),
+    Font = Enum.Font.GothamBold,
+    Text = tostring(SpinSpeed),
+    TextColor3 = Color3.fromRGB(255, 200, 0),
+    TextSize = 11,
+    TextXAlignment = Enum.TextXAlignment.Right,
+    Parent = heliFrame
+})
+
+-- Slider track
+local heliSliderBg = Create("Frame", {
+    BackgroundColor3 = Color3.fromRGB(50, 40, 0),
+    Position = UDim2.new(0, 10, 0, 58),
+    Size = UDim2.new(1, -20, 0, 12),
+    Parent = heliFrame
+}, {
+    Create("UICorner", {CornerRadius = UDim.new(1, 0)})
+})
+
+local heliSliderFill = Create("Frame", {
+    BackgroundColor3 = Color3.fromRGB(255, 200, 0),
+    Size = UDim2.new(SpinSpeed / 100, 0, 1, 0),
+    Parent = heliSliderBg
+}, {
+    Create("UICorner", {CornerRadius = UDim.new(1, 0)})
+})
+
+local heliSliderKnob = Create("Frame", {
+    BackgroundColor3 = Color3.fromRGB(255, 220, 0),
+    Position = UDim2.new(SpinSpeed / 100, -7, 0.5, -7),
+    Size = UDim2.new(0, 14, 0, 14),
+    Parent = heliSliderBg
+}, {
+    Create("UICorner", {CornerRadius = UDim.new(1, 0)})
+})
+
+local heliSliderBtn = Create("TextButton", {
+    BackgroundTransparency = 1,
+    Size = UDim2.new(1, 0, 3, 0),
+    Position = UDim2.new(0, 0, -1, 0),
+    Text = "",
+    ZIndex = 5,
+    Parent = heliSliderBg
+})
+
+-- Slider drag logic
+local heliDragging = false
+local function updateHeliSlider(inputX)
+    local rel = math.clamp((inputX - heliSliderBg.AbsolutePosition.X) / heliSliderBg.AbsoluteSize.X, 0, 1)
+    SpinSpeed = math.floor(rel * 100)
+    if SpinSpeed < 1 then SpinSpeed = 1 end
+    heliSliderFill.Size = UDim2.new(rel, 0, 1, 0)
+    heliSliderKnob.Position = UDim2.new(rel, -7, 0.5, -7)
+    heliSpeedLabel.Text = tostring(SpinSpeed)
+    if spinBAV then
+        spinBAV.AngularVelocity = Vector3.new(0, SpinSpeed, 0)
+    end
+end
+
+heliSliderBtn.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        heliDragging = true
+        updateHeliSlider(input.Position.X)
+    end
+end)
+UserInputService.InputChanged:Connect(function(input)
+    if heliDragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+        updateHeliSlider(input.Position.X)
+    end
+end)
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        heliDragging = false
+    end
+end)
+
+local function startSpinbot()
+    local c = Players.LocalPlayer.Character
+    if not c then return end
+    local hrp = c:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+    if spinBAV then spinBAV:Destroy() spinBAV = nil end
+    for _, v in pairs(hrp:GetChildren()) do
+        if v.Name == "SpinBAV" then v:Destroy() end
+    end
+    spinBAV = Instance.new("BodyAngularVelocity")
+    spinBAV.Name = "SpinBAV"
+    spinBAV.MaxTorque = Vector3.new(0, math.huge, 0)
+    spinBAV.AngularVelocity = Vector3.new(0, SpinSpeed, 0)
+    spinBAV.Parent = hrp
+end
+
+local function stopSpinbot()
+    if spinBAV then spinBAV:Destroy() spinBAV = nil end
+    local c = Players.LocalPlayer.Character
+    if c then
+        local hrp = c:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            for _, v in pairs(hrp:GetChildren()) do
+                if v.Name == "SpinBAV" then v:Destroy() end
+            end
+        end
+    end
+end
+
+heliToggleBtn.MouseButton1Click:Connect(function()
+    HelicopterState = not HelicopterState
+    if HelicopterState then
+        heliToggleBtn.BackgroundColor3 = Color3.fromRGB(255, 200, 0)
+        local moveTween = TweenService:Create(heliCircle, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Position = UDim2.new(0, 32, 0.5, -10)})
+        moveTween:Play()
+        startSpinbot()
+        print("✓ Helicopter: ENABLED")
+    else
+        heliToggleBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+        local moveTween = TweenService:Create(heliCircle, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Position = UDim2.new(0, 2, 0.5, -10)})
+        moveTween:Play()
+        stopSpinbot()
+        print("✗ Helicopter: DISABLED")
+    end
+end)
+
+-- // AUTO STEAL //
+local AutoStealState = false
+local isStealing = false
+local stealStartTime = nil
+local progressConnection = nil
+local StealData = {}
+local STEAL_DURATION = 1.3
+local STEAL_RADIUS = 20
+
+-- Build the Auto Steal panel
+local stealFrame = Create("Frame", {
+    Name = "AutoSteal",
+    BackgroundColor3 = Color3.fromRGB(40, 35, 5),
+    BorderSizePixel = 0,
+    Size = UDim2.new(1, 0, 0, 70),
+    Parent = Content2
+}, {
+    Create("UICorner", {CornerRadius = UDim.new(0, 8)}),
+    Create("UIGradient", {
+        Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 210, 80)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(200, 150, 0)),
+        }),
+        Rotation = 135
+    }),
+    Create("UIStroke", {
+        Color = Color3.fromRGB(255, 220, 0),
+        Thickness = 1,
+        Transparency = 0.3
+    })
+})
+
+-- Progress bar on screen (outside UI at top)
+local ScreenProgressFrame = Create("Frame", {
+    Name = "StealProgressBar",
+    BackgroundColor3 = Color3.fromRGB(30, 30, 30),
+    BorderSizePixel = 0,
+    Position = UDim2.new(0.5, -150, 0, 20),
+    Size = UDim2.new(0, 300, 0, 30),
+    Visible = true,
+    Parent = ScreenGui
+}, {
+    Create("UICorner", {CornerRadius = UDim.new(0, 8)}),
+    Create("UIStroke", {
+        Color = Color3.fromRGB(255, 200, 0),
+        Thickness = 2,
+        ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    })
+})
+
+-- Status label on screen
+local ScreenProgressLabel = Create("TextLabel", {
+    BackgroundTransparency = 1,
+    Position = UDim2.new(0, 10, 0, 0),
+    Size = UDim2.new(0.6, 0, 1, 0),
+    Font = Enum.Font.GothamBold,
+    Text = "READY",
+    TextColor3 = Color3.fromRGB(255, 200, 0),
+    TextSize = 12,
+    TextXAlignment = Enum.TextXAlignment.Left,
+    Parent = ScreenProgressFrame
+})
+
+-- Percent label on screen
+local ScreenProgressPercentLabel = Create("TextLabel", {
+    BackgroundTransparency = 1,
+    Position = UDim2.new(0.6, 0, 0, 0),
+    Size = UDim2.new(0.4, -10, 1, 0),
+    Font = Enum.Font.GothamBold,
+    Text = "0%",
+    TextColor3 = Color3.fromRGB(255, 200, 0),
+    TextSize = 12,
+    TextXAlignment = Enum.TextXAlignment.Right,
+    Parent = ScreenProgressFrame
+})
+
+-- Progress track on screen
+local ScreenStealTrack = Create("Frame", {
+    BackgroundColor3 = Color3.fromRGB(50, 40, 0),
+    Position = UDim2.new(0, 10, 0, 22),
+    Size = UDim2.new(1, -20, 0, 8),
+    Parent = ScreenProgressFrame
+}, {
+    Create("UICorner", {CornerRadius = UDim.new(1, 0)})
+})
+
+-- Progress fill on screen
+local ScreenProgressBarFill = Create("Frame", {
+    BackgroundColor3 = Color3.fromRGB(255, 200, 0),
+    Size = UDim2.new(0, 0, 1, 0),
+    Parent = ScreenStealTrack
+}, {
+    Create("UICorner", {CornerRadius = UDim.new(1, 0)})
+})
+
+Create("TextLabel", {
+    BackgroundTransparency = 1,
+    Position = UDim2.new(0, 10, 0, 5),
+    Size = UDim2.new(0.6, 0, 0, 20),
+    Font = Enum.Font.GothamBold,
+    Text = "Auto Steal",
+    TextColor3 = Color3.fromRGB(255, 255, 150),
+    TextSize = 12,
+    TextXAlignment = Enum.TextXAlignment.Left,
+    Parent = stealFrame
+})
+
+local stealToggleBtn = Create("TextButton", {
+    BackgroundColor3 = Color3.fromRGB(100, 100, 100),
+    Position = UDim2.new(1, -65, 0, 5),
+    Size = UDim2.new(0, 55, 0, 25),
+    Font = Enum.Font.GothamBold,
+    Text = "",
+    TextColor3 = Color3.new(0, 0, 0),
+    TextSize = 11,
+    Parent = stealFrame
+}, {
+    Create("UICorner", {CornerRadius = UDim.new(1, 0)})
+})
+
+-- Toggle switch circle
+local stealCircle = Create("Frame", {
+    Name = "ToggleCircle",
+    BackgroundColor3 = Color3.new(1, 1, 1),
+    Position = UDim2.new(0, 2, 0.5, -10),
+    Size = UDim2.new(0, 21, 0, 21),
+    Parent = stealToggleBtn
+}, {
+    Create("UICorner", {CornerRadius = UDim.new(1, 0)})
+})
+
+-- Radius label + input
+Create("TextLabel", {
+    BackgroundTransparency = 1,
+    Position = UDim2.new(0, 10, 0, 35),
+    Size = UDim2.new(0.45, 0, 0, 16),
+    Font = Enum.Font.Gotham,
+    Text = "Radius:",
+    TextColor3 = Color3.fromRGB(255, 200, 100),
+    TextSize = 10,
+    TextXAlignment = Enum.TextXAlignment.Left,
+    Parent = stealFrame
+})
+
+local radiusBox = Create("TextBox", {
+    BackgroundColor3 = Color3.fromRGB(50, 40, 0),
+    Position = UDim2.new(0.45, 0, 0, 33),
+    Size = UDim2.new(0, 38, 0, 18),
+    Font = Enum.Font.GothamBold,
+    Text = tostring(STEAL_RADIUS),
+    TextColor3 = Color3.fromRGB(255, 255, 150),
+    TextSize = 10,
+    Parent = stealFrame
+}, {
+    Create("UICorner", {CornerRadius = UDim.new(0, 4)})
+})
+
+radiusBox.FocusLost:Connect(function()
+    local n = tonumber(radiusBox.Text)
+    if n then
+        STEAL_RADIUS = math.clamp(math.floor(n), 5, 100)
+        radiusBox.Text = tostring(STEAL_RADIUS)
+    end
+end)
+
+-- Helper functions
+local function ResetProgressBar()
+    ScreenProgressLabel.Text = "READY"
+    ScreenProgressPercentLabel.Text = "0%"
+    ScreenProgressBarFill.Size = UDim2.new(0, 0, 1, 0)
+end
+
+local function isMyPlotByName(pn)
+    local plots = workspace:FindFirstChild("Plots")
+    if not plots then return false end
+    local plot = plots:FindFirstChild(pn)
+    if not plot then return false end
+    local sign = plot:FindFirstChild("PlotSign")
+    if sign then
+        local yb = sign:FindFirstChild("YourBase")
+        if yb and yb:IsA("BillboardGui") then return yb.Enabled == true end
+    end
+    return false
+end
+
+local function findNearestPrompt()
+    local h = Players.LocalPlayer.Character and Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if not h then return nil end
+    local plots = workspace:FindFirstChild("Plots")
+    if not plots then return nil end
+    local np, nd, nn = nil, math.huge, nil
+    for _, plot in ipairs(plots:GetChildren()) do
+        if isMyPlotByName(plot.Name) then continue end
+        local podiums = plot:FindFirstChild("AnimalPodiums")
+        if not podiums then continue end
+        for _, pod in ipairs(podiums:GetChildren()) do
+            pcall(function()
+                local base = pod:FindFirstChild("Base")
+                local spawn = base and base:FindFirstChild("Spawn")
+                if spawn then
+                    local dist = (spawn.Position - h.Position).Magnitude
+                    if dist < nd and dist <= STEAL_RADIUS then
+                        local att = spawn:FindFirstChild("PromptAttachment")
+                        if att then
+                            for _, ch in ipairs(att:GetChildren()) do
+                                if ch:IsA("ProximityPrompt") then np, nd, nn = ch, dist, pod.Name break end
+                            end
+                        end
+                    end
+                end
+            end)
+        end
+    end
+    return np, nd, nn
+end
+
+local function executeSteal(prompt, name)
+    if isStealing then return end
+    if not StealData[prompt] then
+        StealData[prompt] = {hold = {}, trigger = {}, ready = true}
+        pcall(function()
+            if getconnections then
+                for _, c in ipairs(getconnections(prompt.PromptButtonHoldBegan)) do
+                    if c.Function then table.insert(StealData[prompt].hold, c.Function) end
+                end
+                for _, c in ipairs(getconnections(prompt.Triggered)) do
+                    if c.Function then table.insert(StealData[prompt].trigger, c.Function) end
+                end
+            end
+        end)
+    end
+    local data = StealData[prompt]
+    if not data.ready then return end
+    data.ready = false
+    isStealing = true
+    stealStartTime = tick()
+    ScreenProgressLabel.Text = name or "STEALING..."
+    if progressConnection then progressConnection:Disconnect() end
+    progressConnection = RunService.Heartbeat:Connect(function()
+        if not isStealing then progressConnection:Disconnect() return end
+        local prog = math.clamp((tick() - stealStartTime) / STEAL_DURATION, 0, 1)
+        ScreenProgressBarFill.Size = UDim2.new(prog, 0, 1, 0)
+        ScreenProgressPercentLabel.Text = math.floor(prog * 100) .. "%"
+    end)
+    task.spawn(function()
+        for _, f in ipairs(data.hold) do task.spawn(f) end
+        task.wait(STEAL_DURATION)
+        for _, f in ipairs(data.trigger) do task.spawn(f) end
+        if progressConnection then progressConnection:Disconnect() end
+        ResetProgressBar()
+        data.ready = true
+        isStealing = false
+    end)
+end
+
+local Connections = {}
+
+local function startAutoSteal()
+    if Connections.autoSteal then return end
+    Connections.autoSteal = RunService.Heartbeat:Connect(function()
+        if not AutoStealState or isStealing then return end
+        local p, _, n = findNearestPrompt()
+        if p then executeSteal(p, n) end
+    end)
+end
+
+local function stopAutoSteal()
+    if Connections.autoSteal then Connections.autoSteal:Disconnect() Connections.autoSteal = nil end
+    isStealing = false
+    ResetProgressBar()
+end
+
+stealToggleBtn.MouseButton1Click:Connect(function()
+    AutoStealState = not AutoStealState
+    if AutoStealState then
+        stealToggleBtn.BackgroundColor3 = Color3.fromRGB(255, 200, 0)
+        local moveTween = TweenService:Create(stealCircle, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Position = UDim2.new(0, 32, 0.5, -10)})
+        moveTween:Play()
+        startAutoSteal()
+        print("✓ Auto Steal: ENABLED")
+    else
+        stealToggleBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+        local moveTween = TweenService:Create(stealCircle, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Position = UDim2.new(0, 2, 0.5, -10)})
+        moveTween:Play()
+        stopAutoSteal()
+        print("✗ Auto Steal: DISABLED")
+    end
+end)
+
+-- // MELEE AIMBOT //
+local AimbotState = false
+local AimbotData = { Conn = nil, Circle = nil, Align = nil, Attach = nil }
+
+createMiscToggle(Content2, "Hit-Circle", function(enabled)
+    AimbotState = enabled
+    if enabled then
+        local char = Players.LocalPlayer.Character or Players.LocalPlayer.CharacterAdded:Wait()
+        local hrp = char:WaitForChild("HumanoidRootPart")
+        
+        AimbotData.Attach = Instance.new("Attachment", hrp)
+        AimbotData.Align = Instance.new("AlignOrientation", hrp)
+        AimbotData.Align.Attachment0 = AimbotData.Attach
+        AimbotData.Align.Mode = Enum.OrientationAlignmentMode.OneAttachment
+        AimbotData.Align.RigidityEnabled = true
+        
+        AimbotData.Circle = Create("Part", {
+            Shape = "Cylinder",
+            Material = "Neon",
+            Size = Vector3.new(0.05, 14.5, 14.5),
+            Color = Color3.new(1, 0.8, 0),
+            CanCollide = false,
+            Massless = true,
+            Parent = Workspace
+        })
+        
+        Create("Weld", {
+            Part0 = hrp,
+            Part1 = AimbotData.Circle,
+            C0 = CFrame.new(0, -1, 0) * CFrame.Angles(0, 0, math.rad(90)),
+            Parent = AimbotData.Circle
+        })
+        
+        AimbotData.Conn = RunService.RenderStepped:Connect(function()
+            if not AimbotState or not char.Parent then return end
+            local target, dmin = nil, 7.25
+            for _, p in ipairs(Players:GetPlayers()) do
+                if p ~= Players.LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                    local d = (p.Character.HumanoidRootPart.Position - hrp.Position).Magnitude
+                    if d <= dmin then
+                        target = p.Character.HumanoidRootPart
+                        dmin = d
+                    end
+                end
+            end
+            
+            if target then
+                char.Humanoid.AutoRotate = false
+                AimbotData.Align.Enabled = true
+                AimbotData.Align.CFrame = CFrame.lookAt(hrp.Position, Vector3.new(target.Position.X, hrp.Position.Y, target.Position.Z))
+                local t = char:FindFirstChild("Bat") or char:FindFirstChild("Medusa")
+                if t then pcall(function() t:Activate() end) end
+            else
+                AimbotData.Align.Enabled = false
+                char.Humanoid.AutoRotate = true
+            end
+        end)
+        print("✓ Melee Aimbot: ENABLED")
+    else
+        if AimbotData.Conn then AimbotData.Conn:Disconnect() end
+        if AimbotData.Circle then AimbotData.Circle:Destroy() end
+        if AimbotData.Align then AimbotData.Align:Destroy() end
+        if AimbotData.Attach then AimbotData.Attach:Destroy() end
+        if Players.LocalPlayer.Character and Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
+            Players.LocalPlayer.Character.Humanoid.AutoRotate = true
+        end
+        AimbotData = { Conn = nil, Circle = nil, Align = nil, Attach = nil }
+        print("✗ Melee Aimbot: DISABLED")
+    end
+end)
+
+-- // AUTO PATH STEAL //
+local VELOCITY_SPEED     = 59.2
+local SECOND_PHASE_SPEED = 29.6
+local BASE_STOP          = 1.35
+local MIN_STOP           = 0.65
+local NEXT_POINT_BIAS    = 0.45
+local SMOOTH_FACTOR      = 0.12
+
+local path_Right = {
+    {pos = Vector3.new(-470.6, -5.9,  34.4)},
+    {pos = Vector3.new(-484.2, -3.9,  21.4)},
+    {pos = Vector3.new(-475.6, -5.8,  29.3)},
+    {pos = Vector3.new(-473.4, -5.9, 111.0)}
+}
+
+local path_Left = {
+    {pos = Vector3.new(-474.7, -5.9, 91.0)},
+    {pos = Vector3.new(-483.4, -3.9, 97.3)},
+    {pos = Vector3.new(-474.7, -5.9, 91.0)},
+    {pos = Vector3.new(-476.1, -5.5, 25.4)}
+}
+
+local pathActive  = false
+local lastFlatVel = Vector3.zero
+
+local function pathMoveToPoint(hrp, current, nextPoint, speed)
+    local conn
+    conn = RunService.Heartbeat:Connect(function()
+        if not pathActive then
+            conn:Disconnect()
+            hrp.AssemblyLinearVelocity = Vector3.zero
+            return
+        end
+        local pos      = hrp.Position
+        local target   = Vector3.new(current.X, pos.Y, current.Z)
+        local dir      = target - pos
+        local dist     = dir.Magnitude
+        local stopDist = math.clamp(BASE_STOP - dist * 0.04, MIN_STOP, BASE_STOP)
+        if dist <= stopDist then
+            conn:Disconnect()
+            hrp.AssemblyLinearVelocity = Vector3.zero
+            return
+        end
+        local moveDir = dir.Unit
+        if nextPoint then
+            local nd  = (Vector3.new(nextPoint.X, pos.Y, nextPoint.Z) - pos).Unit
+            moveDir   = (moveDir + nd * NEXT_POINT_BIAS).Unit
+        end
+        if lastFlatVel.Magnitude > 0.1 then
+            moveDir = (moveDir * (1 - SMOOTH_FACTOR) + lastFlatVel.Unit * SMOOTH_FACTOR).Unit
+        end
+        local vel = Vector3.new(moveDir.X * speed, hrp.AssemblyLinearVelocity.Y, moveDir.Z * speed)
+        hrp.AssemblyLinearVelocity = vel
+        lastFlatVel = Vector3.new(vel.X, 0, vel.Z)
+    end)
+    while pathActive and
+        (Vector3.new(hrp.Position.X, 0, hrp.Position.Z)
+         - Vector3.new(current.X, 0, current.Z)).Magnitude > BASE_STOP do
+        RunService.Heartbeat:Wait()
+    end
+end
+
+local function runPath(path)
+    local char = Players.LocalPlayer.Character or Players.LocalPlayer.CharacterAdded:Wait()
+    local hrp  = char:WaitForChild("HumanoidRootPart")
+    for i, p in ipairs(path) do
+        if not pathActive then return end
+        local speed = i > 2 and SECOND_PHASE_SPEED or VELOCITY_SPEED
+        local nextP = path[i + 1] and path[i + 1].pos
+        pathMoveToPoint(hrp, p.pos, nextP, speed)
+        if i == 2 then task.wait(0.2) else task.wait(0.01) end
+    end
+end
+
+local function startPath(path)
+    pathActive = true
+    task.spawn(function()
+        while pathActive do
+            runPath(path)
+            task.wait(0.1)
+        end
+    end)
+end
+
+local function stopPath()
+    pathActive = false
+    local hrp = Players.LocalPlayer.Character and Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if hrp then hrp.AssemblyLinearVelocity = Vector3.zero end
+end
+
+-- forward declare so each button can reference the other
+local autoRightStealActive = false
+local autoLeftStealActive  = false
+local rightStealBtn, leftStealBtn
+
+-- ── AUTO RIGHT STEAL panel ──────────────────────────────────────
+local rightStealFrame = Create("Frame", {
+    Name = "AutoRightSteal",
+    BackgroundColor3 = Color3.fromRGB(40, 35, 5),
+    BorderSizePixel = 0,
+    Size = UDim2.new(1, 0, 0, 50),
+    Parent = Content2
+}, {
+    Create("UICorner",   {CornerRadius = UDim.new(0, 8)}),
+    Create("UIGradient", {
+        Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 210, 80)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(200, 150, 0)),
+        }),
+        Rotation = 135
+    }),
+    Create("UIStroke", {Color = Color3.fromRGB(255, 220, 0), Thickness = 1, Transparency = 0.3})
+})
+
+Create("TextLabel", {
+    BackgroundTransparency = 1,
+    Position = UDim2.new(0, 10, 0, 5),
+    Size     = UDim2.new(0.55, 0, 0, 20),
+    Font     = Enum.Font.GothamBold,
+    Text     = "Auto Right",
+    TextColor3 = Color3.fromRGB(255, 255, 150),
+    TextSize = 12,
+    TextXAlignment = Enum.TextXAlignment.Left,
+    Parent   = rightStealFrame
+})
+
+Create("TextLabel", {
+    BackgroundColor3 = Color3.fromRGB(200, 150, 0),
+    Position = UDim2.new(0.58, 0, 0, 7),
+    Size     = UDim2.new(0, 22, 0, 18),
+    Font     = Enum.Font.GothamBold,
+    Text     = "T",
+    TextColor3 = Color3.fromRGB(0, 0, 0),
+    TextSize = 11,
+    TextXAlignment = Enum.TextXAlignment.Center,
+    Parent   = rightStealFrame
+}, {Create("UICorner", {CornerRadius = UDim.new(0, 4)})})
+
+rightStealBtn = Create("TextButton", {
+    BackgroundColor3 = Color3.fromRGB(100, 100, 100),
+    Position = UDim2.new(1, -65, 0, 5),
+    Size     = UDim2.new(0, 55, 0, 25),
+    Font     = Enum.Font.GothamBold,
+    Text     = "",
+    TextColor3 = Color3.new(0, 0, 0),
+    TextSize = 11,
+    Parent   = rightStealFrame
+}, {
+    Create("UICorner", {CornerRadius = UDim.new(1, 0)})
+})
+
+-- Toggle switch circle for right steal
+local rightStealCircle = Create("Frame", {
+    Name = "ToggleCircle",
+    BackgroundColor3 = Color3.new(1, 1, 1),
+    Position = UDim2.new(0, 2, 0.5, -10),
+    Size = UDim2.new(0, 21, 0, 21),
+    Parent = rightStealBtn
+}, {
+    Create("UICorner", {CornerRadius = UDim.new(1, 0)})
+})
+
+-- ── AUTO LEFT STEAL panel ───────────────────────────────────────
+local leftStealFrame = Create("Frame", {
+    Name = "AutoLeftSteal",
+    BackgroundColor3 = Color3.fromRGB(40, 35, 5),
+    BorderSizePixel = 0,
+    Size = UDim2.new(1, 0, 0, 50),
+    Parent = Content2
+}, {
+    Create("UICorner",   {CornerRadius = UDim.new(0, 8)}),
+    Create("UIGradient", {
+        Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 210, 80)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(200, 150, 0)),
+        }),
+        Rotation = 135
+    }),
+    Create("UIStroke", {Color = Color3.fromRGB(255, 220, 0), Thickness = 1, Transparency = 0.3})
+})
+
+Create("TextLabel", {
+    BackgroundTransparency = 1,
+    Position = UDim2.new(0, 10, 0, 5),
+    Size     = UDim2.new(0.55, 0, 0, 20),
+    Font     = Enum.Font.GothamBold,
+    Text     = "Auto Left",
+    TextColor3 = Color3.fromRGB(255, 255, 150),
+    TextSize = 12,
+    TextXAlignment = Enum.TextXAlignment.Left,
+    Parent   = leftStealFrame
+})
+
+Create("TextLabel", {
+    BackgroundColor3 = Color3.fromRGB(200, 150, 0),
+    Position = UDim2.new(0.58, 0, 0, 7),
+    Size     = UDim2.new(0, 22, 0, 18),
+    Font     = Enum.Font.GothamBold,
+    Text     = "R",
+    TextColor3 = Color3.fromRGB(0, 0, 0),
+    TextSize = 11,
+    TextXAlignment = Enum.TextXAlignment.Center,
+    Parent   = leftStealFrame
+}, {Create("UICorner", {CornerRadius = UDim.new(0, 4)})})
+
+leftStealBtn = Create("TextButton", {
+    BackgroundColor3 = Color3.fromRGB(100, 100, 100),
+    Position = UDim2.new(1, -65, 0, 5),
+    Size     = UDim2.new(0, 55, 0, 25),
+    Font     = Enum.Font.GothamBold,
+    Text     = "",
+    TextColor3 = Color3.new(0, 0, 0),
+    TextSize = 11,
+    Parent   = leftStealFrame
+}, {
+    Create("UICorner", {CornerRadius = UDim.new(1, 0)})
+})
+
+-- Toggle switch circle for left steal
+local leftStealCircle = Create("Frame", {
+    Name = "ToggleCircle",
+    BackgroundColor3 = Color3.new(1, 1, 1),
+    Position = UDim2.new(0, 2, 0.5, -10),
+    Size = UDim2.new(0, 21, 0, 21),
+    Parent = leftStealBtn
+}, {
+    Create("UICorner", {CornerRadius = UDim.new(1, 0)})
+})
+
+-- ── Toggle logic (mutual exclusion) ────────────────────────────
+local function setRightSteal(state)
+    autoRightStealActive = state
+    if state then
+        rightStealBtn.BackgroundColor3 = Color3.fromRGB(255, 200, 0)
+        local moveTween = TweenService:Create(rightStealCircle, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Position = UDim2.new(0, 32, 0.5, -10)})
+        moveTween:Play()
+        if autoLeftStealActive then
+            autoLeftStealActive = false
+            leftStealBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+            local leftMoveTween = TweenService:Create(leftStealCircle, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Position = UDim2.new(0, 2, 0.5, -10)})
+            leftMoveTween:Play()
+        end
+        stopPath()
+        startPath(path_Right)
+        print("\xE2\x9C\x93 Auto Right Steal: ON  [T]")
+    else
+        rightStealBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+        local moveTween = TweenService:Create(rightStealCircle, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Position = UDim2.new(0, 2, 0.5, -10)})
+        moveTween:Play()
+        stopPath()
+        print("\xE2\x9C\x97 Auto Right Steal: OFF")
+    end
+end
+
+local function setLeftSteal(state)
+    autoLeftStealActive = state
+    if state then
+        leftStealBtn.BackgroundColor3 = Color3.fromRGB(255, 200, 0)
+        local moveTween = TweenService:Create(leftStealCircle, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Position = UDim2.new(0, 32, 0.5, -10)})
+        moveTween:Play()
+        if autoRightStealActive then
+            autoRightStealActive = false
+            rightStealBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+            local rightMoveTween = TweenService:Create(rightStealCircle, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Position = UDim2.new(0, 2, 0.5, -10)})
+            rightMoveTween:Play()
+        end
+        stopPath()
+        startPath(path_Left)
+        print("\xE2\x9C\x93 Auto Left Steal: ON  [R]")
+    else
+        leftStealBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+        local moveTween = TweenService:Create(leftStealCircle, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Position = UDim2.new(0, 2, 0.5, -10)})
+        moveTween:Play()
+        stopPath()
+        print("\xE2\x9C\x97 Auto Left Steal: OFF")
+    end
+end
+
+rightStealBtn.MouseButton1Click:Connect(function() setRightSteal(not autoRightStealActive) end)
+leftStealBtn.MouseButton1Click:Connect(function()  setLeftSteal(not autoLeftStealActive)  end)
+
+-- CUSTOMIZABLE KEYBINDS
+local RightStealKey = Enum.KeyCode.T
+local LeftStealKey = Enum.KeyCode.R
+
+-- Keybinds (Customizable: Change RightStealKey and LeftStealKey variables above)
+UserInputService.InputBegan:Connect(function(input, gpe)
+    if gpe then return end
+    if input.KeyCode == RightStealKey then
+        setRightSteal(not autoRightStealActive)
+    elseif input.KeyCode == LeftStealKey then
+        setLeftSteal(not autoLeftStealActive)
+    end
+end)
+
+-- DRAGGABLE LOGIC (on ContentFrame)
+local dragging = false
+local dragInput = nil
+local dragStart = nil
+local startPos = nil
+
+ContentFrame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        dragStart = input.Position
+        startPos = MainContainer.Position
+    end
+end)
+
+ContentFrame.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement then
+        dragInput = input
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        local delta = input.Position - dragStart
+        MainContainer.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = false
+    end
+end)
+
+print("✓ AKIN HUB - LOADED WITH YELLOW THEME!")

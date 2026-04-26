@@ -1,0 +1,1852 @@
+-- filename: 
+-- version: lua51
+-- line: [0, 0] id: 0
+local r0_0 = game:GetService("HttpService")
+local r1_0 = game:GetService("Players")
+local r2_0 = r1_0.LocalPlayer
+local r3_0 = game:GetService("TweenService")
+local r4_0 = game:GetService("TeleportService")
+local r5_0 = game:GetService("SoundService")
+local r6_0 = game:GetService("Workspace")
+local r7_0 = game:GetService("RunService")
+local r8_0 = game:GetService("Lighting")
+local r9_0 = game:GetService("CoreGui")
+local r10_0 = "https://petfindervm003-default-rtdb.firebaseio.com/pets.json"
+local r11_0 = "https://petfindervm003-default-rtdb.firebaseio.com/suerte.json"
+local function r12_0(r0_71, r1_71)
+  -- line: [0, 0] id: 71
+  local r2_71 = r0_71:FindFirstChildOfClass("UICorner") or Instance.new("UICorner", r0_71)
+  r2_71.CornerRadius = UDim.new(0, r1_71 or 12)
+  return r2_71
+end
+local function r13_0(r0_74, r1_74, r2_74, r3_74)
+  -- line: [0, 0] id: 74
+  local r4_74 = r0_74:FindFirstChildOfClass("UIGradient") or Instance.new("UIGradient", r0_74)
+  r4_74.Color = ColorSequence.new(r1_74)
+  r4_74.Rotation = r2_74 or 0
+  if r3_74 then
+    r4_74.Transparency = r3_74
+  end
+  return r4_74
+end
+local function r14_0(r0_2, r1_2)
+  -- line: [0, 0] id: 2
+  if not r0_2 then
+    return 
+  end
+  if not r1_2 then
+    r1_2 = {}
+  end
+  r0_2.BackgroundColor3 = Color3.fromRGB(220, 235, 255)
+  r0_2.BackgroundTransparency = r1_2.baseTransparency or 0.66
+  r0_2.BorderSizePixel = 0
+  r12_0(r0_2, r1_2.radius or 14)
+  r13_0(r0_2, {
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(245, 250, 255)),
+    ColorSequenceKeypoint.new(0.6, Color3.fromRGB(215, 230, 255)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(200, 220, 255))
+  }, 45, NumberSequence.new({
+    NumberSequenceKeypoint.new(0, 0.7),
+    NumberSequenceKeypoint.new(1, 0.95)
+  }))
+end
+local function r15_0(r0_36)
+  -- line: [0, 0] id: 36
+  if not r0_36 then
+    return 
+  end
+  r14_0(r0_36, {
+    radius = 16,
+    baseTransparency = 0.62,
+  })
+  local r1_36 = r0_36:FindFirstChild("__flowA") or Instance.new("Frame", r0_36)
+  r1_36.Name = "__flowA"
+  r1_36.Size = UDim2.new(1.4, 0, 1.2, 0)
+  r1_36.Position = UDim2.new(-0.2, 0, -0.1, 0)
+  r1_36.BackgroundTransparency = 1
+  r1_36.ZIndex = r0_36.ZIndex + 1
+  local r2_36 = r1_36:FindFirstChildOfClass("UIGradient") or Instance.new("UIGradient", r1_36)
+  r2_36.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(200, 220, 255)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(180, 210, 255))
+  })
+  r2_36.Rotation = 0
+  r2_36.Transparency = NumberSequence.new({
+    NumberSequenceKeypoint.new(0, 0.92),
+    NumberSequenceKeypoint.new(0.5, 0.85),
+    NumberSequenceKeypoint.new(1, 0.94)
+  })
+  local r3_36 = r0_36:FindFirstChild("__flowB") or Instance.new("Frame", r0_36)
+  r3_36.Name = "__flowB"
+  r3_36.Size = UDim2.new(1.6, 0, 1.4, 0)
+  r3_36.Position = UDim2.new(-0.3, 0, -0.2, 0)
+  r3_36.BackgroundTransparency = 1
+  r3_36.ZIndex = r0_36.ZIndex + 2
+  local r4_36 = r3_36:FindFirstChildOfClass("UIGradient") or Instance.new("UIGradient", r3_36)
+  r4_36.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(200, 230, 255)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(220, 240, 255)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(200, 225, 255))
+  })
+  r4_36.Rotation = 90
+  r4_36.Transparency = NumberSequence.new({
+    NumberSequenceKeypoint.new(0, 0.9),
+    NumberSequenceKeypoint.new(0.5, 0.82),
+    NumberSequenceKeypoint.new(1, 0.92)
+  })
+  task.spawn(function()
+    -- line: [0, 0] id: 37
+    local r0_37 = tick()
+    while r0_36 do
+      local r1_37 = r0_36.Parent
+      if r1_37 then
+        r1_37 = tick() - r0_37
+        if r2_36 and r4_36 and r1_36 and r3_36 then
+          r2_36.Rotation = r1_37 * 6 % 360
+          r4_36.Rotation = (90 + r1_37 * 4) % 360
+          r1_36.Position = UDim2.new(-0.22 + math.sin(r1_37 * 0.6) * 0.01, 0, -0.1 + math.cos(r1_37 * 0.4) * 0.01, 0)
+          r3_36.Position = UDim2.new(-0.32 + math.cos(r1_37 * 0.45) * 0.01, 0, -0.2 + math.sin(r1_37 * 0.55) * 0.01, 0)
+        end
+        task.wait(0.04)
+      else
+        break
+      end
+    end
+  end)
+end
+local function r16_0(r0_18, r1_18)
+  -- line: [0, 0] id: 18
+  if not r0_18 then
+    return 
+  end
+  if not r1_18 then
+    r1_18 = {}
+  end
+  r0_18.AutoButtonColor = false
+  r0_18.BackgroundColor3 = r1_18.bgColor or Color3.fromRGB(200, 220, 255)
+  r0_18.BackgroundTransparency = r1_18.bgTransparency or 0.48
+  r12_0(r0_18, r1_18.radius or 10)
+  local r2_18 = r0_18:FindFirstChildOfClass("UIGradient") or Instance.new("UIGradient", r0_18)
+  r2_18.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(200, 220, 255))
+  })
+  r2_18.Rotation = r1_18.rotation or 90
+  r2_18.Transparency = NumberSequence.new({
+    NumberSequenceKeypoint.new(0, 0.6),
+    NumberSequenceKeypoint.new(1, 0.2)
+  })
+  r0_18.InputBegan:Connect(function(r0_19)
+    -- line: [0, 0] id: 19
+    if r0_19.UserInputType == Enum.UserInputType.MouseButton1 or r0_19.UserInputType == Enum.UserInputType.Touch then
+      pcall(function()
+        -- line: [0, 0] id: 20
+        local r0_20 = r3_0
+        local r2_20 = r0_18
+        local r3_20 = TweenInfo.new(0.09, Enum.EasingStyle.Quad)
+        local r4_20 = {
+          BackgroundTransparency = math.max(0, (r0_18.BackgroundTransparency or 0) - 0.12),
+        }
+        r0_20:Create(r2_20, r3_20, r4_20):Play()
+      end)
+    end
+  end)
+  r0_18.InputEnded:Connect(function(r0_21)
+    -- line: [0, 0] id: 21
+    if r0_21.UserInputType == Enum.UserInputType.MouseButton1 or r0_21.UserInputType == Enum.UserInputType.Touch then
+      pcall(function()
+        -- line: [0, 0] id: 22
+        local r0_22 = r3_0
+        local r2_22 = r0_18
+        local r3_22 = TweenInfo.new(0.12, Enum.EasingStyle.Quad)
+        local r4_22 = {
+          BackgroundTransparency = r1_18.bgTransparency or 0.48,
+        }
+        r0_22:Create(r2_22, r3_22, r4_22):Play()
+      end)
+    end
+  end)
+end
+local function r17_0(r0_32)
+  -- line: [0, 0] id: 32
+  if not r0_32 then
+    return 
+  end
+  local r1_32 = r0_32:FindFirstChild("__waterRing") or Instance.new("Frame", r0_32)
+  r1_32.Name = "__waterRing"
+  r1_32.Size = UDim2.new(1.06, 0, 1.06, 0)
+  r1_32.Position = UDim2.new(-0.03, 0, -0.03, 0)
+  r1_32.BackgroundTransparency = 1
+  r1_32.ZIndex = r0_32.ZIndex + 1
+  r12_0(r1_32, 12)
+  local r2_32 = r1_32:FindFirstChildOfClass("UIGradient") or Instance.new("UIGradient", r1_32)
+  r2_32.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(180, 220, 255)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(120, 180, 240)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(80, 140, 220))
+  })
+  r2_32.Rotation = 0
+  r2_32.Transparency = NumberSequence.new({
+    NumberSequenceKeypoint.new(0, 0.85),
+    NumberSequenceKeypoint.new(0.5, 0.6),
+    NumberSequenceKeypoint.new(1, 0.85)
+  })
+  local r3_32 = r1_32:FindFirstChild("__waterHigh") or Instance.new("Frame", r1_32)
+  r3_32.Name = "__waterHigh"
+  r3_32.Size = UDim2.new(0.18, 0, 1.4, 0)
+  r3_32.Position = UDim2.new(-0.25, 0, -0.2, 0)
+  r3_32.BackgroundTransparency = 1
+  r3_32.ZIndex = r1_32.ZIndex + 1
+  local r4_32 = r3_32:FindFirstChildOfClass("UIGradient") or Instance.new("UIGradient", r3_32)
+  r4_32.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(200, 235, 255)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255))
+  })
+  r4_32.Rotation = 20
+  r4_32.Transparency = NumberSequence.new({
+    NumberSequenceKeypoint.new(0, 0.9),
+    NumberSequenceKeypoint.new(0.5, 0.75),
+    NumberSequenceKeypoint.new(1, 0.9)
+  })
+  task.spawn(function()
+    -- line: [0, 0] id: 33
+    local r0_33 = tick()
+    while r0_32 do
+      local r1_33 = r0_32.Parent
+      if r1_33 then
+        r1_33 = tick() - r0_33
+        r3_32.Position = UDim2.new(-0.35 + r1_33 * 0.25 % 1.7, 0, -0.2, 0)
+        r2_32.Rotation = r1_33 * 40 % 360
+        task.wait(0.03)
+      else
+        break
+      end
+    end
+  end)
+end
+local function r18_0()
+  -- line: [0, 0] id: 1
+  local r0_1 = r8_0:FindFirstChild("LiquidGlassBlur")
+  if not r0_1 then
+    r0_1 = Instance.new("BlurEffect", r8_0)
+    r0_1.Name = "LiquidGlassBlur"
+    r0_1.Size = 0
+    r0_1.Enabled = true
+  end
+  return r0_1
+end
+local function r19_0(r0_28, r1_28)
+  -- line: [0, 0] id: 28
+  local r2_28 = r18_0()
+  if not r1_28 then
+    r1_28 = 0.28
+  end
+  local r3_28 = r2_28.Size
+  local r4_28 = math.max(1, math.floor(r1_28 / 0.02))
+  for r8_28 = 1, r4_28, 1 do
+    r2_28.Size = r3_28 + (r0_28 - r3_28) * r8_28 / r4_28
+    task.wait(r1_28 / r4_28)
+  end
+  r2_28.Size = r0_28
+end
+local r20_0 = Instance.new("ScreenGui", r9_0)
+r20_0.Name = "PhucmaxRainbowUI"
+r20_0.ResetOnSpawn = false
+r20_0.DisplayOrder = 1000
+local function r21_0(r0_78)
+  -- line: [0, 0] id: 78
+  local r1_78 = Instance.new("UIStroke", r0_78)
+  r1_78.Thickness = 2
+  r1_78.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+  r1_78.Color = Color3.new(1, 0, 0)
+  task.spawn(function()
+    -- line: [0, 0] id: 79
+    local r0_79 = 0
+    while r0_78.Parent do
+      r0_79 = (r0_79 + 1) % 255
+      r1_78.Color = Color3.fromHSV(r0_79 / 255, 1, 1)
+      task.wait(0.03)
+    end
+  end)
+end
+local r22_0 = Instance.new("Frame", r20_0)
+r22_0.Size = UDim2.new(0, 280, 0, 340)
+r22_0.AnchorPoint = Vector2.new(0.5, 0.5)
+r22_0.Position = UDim2.new(0.5, 0, 0.5, 0)
+r22_0.ClipsDescendants = true
+r22_0.Visible = false
+r22_0.Active = true
+r22_0.Draggable = true
+r12_0(r22_0, 16)
+r21_0(r22_0)
+r15_0(r22_0)
+local function r23_0()
+  -- line: [0, 0] id: 40
+  if not r22_0.Visible then
+    r22_0.Visible = true
+    r22_0.Size = UDim2.new(0, 0, 0, 0)
+    r22_0.Position = UDim2.new(0.5, 0, 0.5, 0)
+    r3_0:Create(r22_0, TweenInfo.new(0.34, Enum.EasingStyle.Quad), {
+      Size = UDim2.new(0, 280, 0, 340),
+    }):Play()
+    task.spawn(function()
+      -- line: [0, 0] id: 41
+      r19_0(18, 0.34)
+    end)
+  else
+    r3_0:Create(r22_0, TweenInfo.new(0.28, Enum.EasingStyle.Quad), {
+      Size = UDim2.new(0, 0, 0, 0),
+    }):Play()
+    task.spawn(function()
+      -- line: [0, 0] id: 42
+      r19_0(0, 0.28)
+      task.wait(0.28)
+      r22_0.Visible = false
+    end)
+  end
+end
+local r24_0 = Instance.new("ScrollingFrame", r22_0)
+r24_0.Size = UDim2.new(1, -20, 0, 36)
+r24_0.Position = UDim2.new(0, 10, 0, 10)
+r24_0.ScrollBarThickness = 4
+r24_0.ScrollingDirection = Enum.ScrollingDirection.X
+r24_0.CanvasSize = UDim2.new(0, 0, 0, 0)
+r24_0.BackgroundTransparency = 1
+local r25_0 = Instance.new("UIListLayout", r24_0)
+r25_0.FillDirection = Enum.FillDirection.Horizontal
+r25_0.Padding = UDim.new(0, 5)
+r25_0.SortOrder = Enum.SortOrder.LayoutOrder
+local function r26_0()
+  -- line: [0, 0] id: 61
+  task.wait()
+  local r0_61 = 0
+  for r4_61, r5_61 in pairs(r24_0:GetChildren()) do
+    if r5_61:IsA("TextButton") then
+      r0_61 = r0_61 + r5_61.Size.X.Offset + r25_0.Padding.Offset
+    end
+  end
+  r24_0.CanvasSize = UDim2.new(0, r0_61, 0, 0)
+end
+local r27_0 = Instance.new("Frame", r22_0)
+r27_0.Size = UDim2.new(1, -20, 1, -60)
+r27_0.Position = UDim2.new(0, 10, 0, 50)
+r27_0.BackgroundTransparency = 1
+local r28_0 = {}
+local r29_0 = nil
+local function r30_0(r0_73)
+  -- line: [0, 0] id: 73
+  for r4_73, r5_73 in pairs(r28_0) do
+    r5_73.Visible = r4_73 == r0_73
+  end
+end
+local function r31_0(r0_29)
+  -- line: [0, 0] id: 29
+  local r1_29 = Instance.new("TextButton", r24_0)
+  r1_29.Size = UDim2.new(0, 80, 1, 0)
+  r1_29.Text = r0_29
+  r1_29.TextColor3 = Color3.new(1, 1, 1)
+  r1_29.Font = Enum.Font.GothamBold
+  r1_29.TextSize = 14
+  r1_29.BackgroundTransparency = 0.6
+  r12_0(r1_29, 8)
+  r16_0(r1_29, {
+    bgColor = Color3.fromRGB(200, 220, 255),
+    bgTransparency = 0.58,
+    radius = 8,
+  })
+  local r2_29 = Instance.new("ScrollingFrame", r27_0)
+  r2_29.Size = UDim2.new(1, 0, 1, 0)
+  r2_29.CanvasSize = UDim2.new(0, 0, 0, 0)
+  r2_29.ScrollBarThickness = 4
+  r2_29.AutomaticCanvasSize = Enum.AutomaticSize.Y
+  r2_29.BackgroundTransparency = 1
+  local r3_29 = Instance.new("UIListLayout", r2_29)
+  r3_29.Padding = UDim.new(0, 6)
+  r3_29.SortOrder = Enum.SortOrder.LayoutOrder
+  r3_29.HorizontalAlignment = Enum.HorizontalAlignment.Center
+  r28_0[r0_29] = r2_29
+  r2_29.Visible = false
+  r1_29.MouseButton1Click:Connect(function()
+    -- line: [0, 0] id: 30
+    r30_0(r0_29)
+  end)
+  if not r29_0 then
+    r29_0 = r0_29
+    r2_29.Visible = true
+  end
+  r26_0()
+  return r2_29
+end
+local r32_0 = r31_0("Home")
+local r33_0 = r31_0("Finder")
+local r34_0 = Instance.new("Sound", r5_0)
+r34_0.SoundId = "rbxassetid://130735042055734"
+r34_0.Volume = 0.5
+local r35_0 = Instance.new("Sound", r5_0)
+r35_0.SoundId = "rbxassetid://142376088"
+r35_0.Volume = 0.5
+local r36_0 = Instance.new("Sound", r5_0)
+r36_0.SoundId = "rbxassetid://5735662572"
+r36_0.Volume = 1
+local r37_0 = Instance.new("Sound", r5_0)
+r37_0.SoundId = "rbxassetid://6234792983"
+r37_0.Volume = 1
+local r38_0 = Instance.new("Sound", r5_0)
+r38_0.SoundId = "rbxassetid://1837258874"
+r38_0.Volume = 0.5
+local function r39_0(r0_69, r1_69)
+  -- line: [0, 0] id: 69
+  r0_69.TimePosition = 0
+  r0_69:Play()
+  task.delay(r1_69, function()
+    -- line: [0, 0] id: 70
+    local r0_70 = 1
+    local r1_70 = r0_69.Volume
+    local r2_70 = r1_70 / r0_70 * 30
+    for r6_70 = 1, r0_70 * 30, 1 do
+      r0_69.Volume = r0_69.Volume - r2_70
+      task.wait(0.03333333333333333)
+    end
+    r0_69:Stop()
+    r0_69.Volume = r1_70
+  end)
+end
+r39_0(r37_0, 3)
+local function r40_0()
+  -- line: [0, 0] id: 11
+  local r0_11 = Instance.new("ScreenGui", r2_0:WaitForChild("PlayerGui"))
+  r0_11.ResetOnSpawn = false
+  local r1_11 = Instance.new("TextLabel", r0_11)
+  r1_11.Size = UDim2.new(0.8, 0, 0.2, 0)
+  r1_11.Position = UDim2.new(0.1, 0, 0.4, 0)
+  r1_11.BackgroundTransparency = 1
+  r1_11.Text = "⚠ Haz sido baneado por utilizar el Script en Server Privado ������\nSi quieres unban escribeme a mi Telegram: @Alexvmofc\\You got ban, dont use on Private Servers"
+  r1_11.TextColor3 = Color3.fromRGB(255, 255, 255)
+  r1_11.TextWrapped = true
+  r1_11.Font = Enum.Font.GothamBold
+  r1_11.TextScaled = true
+  r1_11.TextTransparency = 0
+  task.delay(8, function()
+    -- line: [0, 0] id: 12
+    for r3_12 = 0, 1, 0.05 do
+      r1_11.TextTransparency = r3_12
+      task.wait(0.1)
+    end
+    r0_11:Destroy()
+  end)
+end
+local function r41_0(r0_4)
+  -- line: [0, 0] id: 4
+  local r1_4, r2_4 = pcall(function()
+    -- line: [0, 0] id: 5
+    return r0_0:RequestAsync({
+      Url = r11_0,
+      Method = "GET",
+    })
+  end)
+  if r1_4 and r2_4.Success then
+    local r3_4 = r0_0:JSONDecode(r2_4.Body)
+    if r3_4 and r3_4[tostring(r0_4)] and r3_4[tostring(r0_4)].ban == true then
+      r40_0()
+      task.delay(5, function()
+        -- line: [0, 0] id: 6
+        pcall(function()
+          -- line: [0, 0] id: 8
+          if r20_0 then
+            r20_0:Destroy()
+          end
+        end)
+        pcall(function()
+          -- line: [0, 0] id: 7
+          script:Destroy()
+        end)
+      end)
+      return true
+    end
+  end
+  return false
+end
+local function r42_0()
+  -- line: [0, 0] id: 63
+  local r0_63 = r2_0:FindFirstChildOfClass("PlayerGui")
+  while not r0_63 do
+    task.wait()
+    r0_63 = r2_0:FindFirstChildOfClass("PlayerGui")
+  end
+  return r0_63
+end
+local function r43_0(r0_83, r1_83)
+  -- line: [0, 0] id: 83
+  local r2_83 = Instance.new("UIStroke")
+  r2_83.Thickness = r1_83 or 1.4
+  r2_83.Color = Color3.new(0, 0, 0)
+  r2_83.LineJoinMode = Enum.LineJoinMode.Round
+  r2_83.Parent = r0_83
+end
+local r44_0 = nil
+local r45_0 = nil
+task.defer(function()
+  -- line: [0, 0] id: 57
+  local r0_57 = r42_0()
+  local r1_57 = r0_57:FindFirstChild("TopBannerGui") or Instance.new("ScreenGui")
+  r1_57.Name = "TopBannerGui"
+  r1_57.IgnoreGuiInset = true
+  r1_57.ResetOnSpawn = false
+  r1_57.Parent = r0_57
+  r45_0 = Instance.new("TextLabel", r1_57)
+  r45_0.Name = "Top_Title"
+  r45_0.AnchorPoint = Vector2.new(0.5, 0)
+  r45_0.Position = UDim2.new(0.5, 0, 0, 8)
+  r45_0.Size = UDim2.new(0, 800, 0, 36)
+  r45_0.BackgroundTransparency = 1
+  r45_0.Text = "Luther Pet Finder Free/Gratis"
+  r45_0.Font = Enum.Font.GothamBlack
+  r45_0.TextSize = 28
+  r45_0.TextColor3 = Color3.fromRGB(255, 255, 255)
+  r43_0(r45_0, 2.2)
+  local r2_57 = Instance.new("TextLabel", r1_57)
+  r2_57.Name = "Subtitle"
+  r2_57.AnchorPoint = Vector2.new(0.5, 0)
+  r2_57.Position = UDim2.new(0.5, 0, 0, 40)
+  r2_57.BackgroundTransparency = 1
+  r2_57.Text = "YouTube: Alex VM Scripts | Tested by: UserX"
+  r2_57.Font = Enum.Font.GothamSemibold
+  r2_57.TextSize = 16
+  r2_57.TextColor3 = Color3.fromRGB(200, 200, 200)
+  r43_0(r2_57, 1)
+  if r44_0 then
+    r44_0:Disconnect()
+  end
+  r44_0 = r7_0.Heartbeat:Connect(function()
+    -- line: [0, 0] id: 58
+    r45_0.TextColor3 = Color3.fromHSV(os.clock() * 0.25 % 1, 1, 1)
+  end)
+  r45_0.AncestryChanged:Connect(function(r0_59, r1_59)
+    -- line: [0, 0] id: 59
+    if not r1_59 and r44_0 then
+      r44_0:Disconnect()
+      r44_0 = nil
+    end
+  end)
+  local r3_57 = r0_57:FindFirstChild("BottomBannerGui") or Instance.new("ScreenGui")
+  r3_57.Name = "BottomBannerGui"
+  r3_57.IgnoreGuiInset = true
+  r3_57.ResetOnSpawn = false
+  r3_57.Parent = r0_57
+  local r4_57 = Instance.new("Frame", r3_57)
+  r4_57.Name = "BR_Block"
+  r4_57.AnchorPoint = Vector2.new(1, 1)
+  r4_57.Position = UDim2.new(1, -20, 1, -20)
+  r4_57.Size = UDim2.new(0, 340, 0, 72)
+  r4_57.BackgroundTransparency = 1
+  local r5_57 = Instance.new("TextLabel", r4_57)
+  r5_57.Size = UDim2.new(1, -10, 1, -10)
+  r5_57.Position = UDim2.new(0, 5, 0, 5)
+  r5_57.BackgroundTransparency = 1
+  r5_57.Text = "This Script is Free\nEste Script es Gratis"
+  r5_57.TextWrapped = true
+  r5_57.TextXAlignment = Enum.TextXAlignment.Right
+  r5_57.TextYAlignment = Enum.TextYAlignment.Center
+  r5_57.Font = Enum.Font.GothamSemibold
+  r5_57.TextSize = 20
+  r5_57.TextColor3 = Color3.fromRGB(255, 255, 255)
+  r43_0(r5_57, 2)
+end)
+local r47_0 = {
+  {
+    name = "Lucky -5M",
+    color = Color3.fromRGB(255, 80, 80),
+  },
+  {
+    name = "Lucky 15M",
+    color = Color3.fromRGB(80, 255, 100),
+  },
+  {
+    name = "Lucky VIP Free",
+    color = Color3.fromRGB(180, 0, 255),
+  }
+}
+local r48_0 = 840
+local r49_0 = false
+local r50_0 = "Calcula tu suerte"
+local r51_0 = nil
+local r52_0 = Instance.new("ScreenGui", r2_0:WaitForChild("PlayerGui"))
+r52_0.Name = "LuckyUI"
+r52_0.ResetOnSpawn = false
+local r53_0 = Instance.new("TextButton", r52_0)
+r53_0.TextScaled = true
+r53_0.Font = Enum.Font.GothamBold
+Instance.new("UICorner", r53_0).CornerRadius = UDim.new(0, 15)
+r16_0(r53_0, {
+  bgColor = Color3.fromRGB(190, 210, 255),
+  bgTransparency = 0.5,
+})
+local r54_0 = Instance.new("Frame", r52_0)
+r54_0.AnchorPoint = Vector2.new(0.5, 0.5)
+r54_0.Position = UDim2.new(0.5, 0, -0.5, 0)
+r54_0.Size = UDim2.new(0, 320, 0, 170)
+r54_0.Visible = false
+r12_0(r54_0, 20)
+r15_0(r54_0)
+local r55_0 = Instance.new("TextLabel", r54_0)
+r55_0.Size = UDim2.new(1, -20, 0.6, 0)
+r55_0.Position = UDim2.new(0, 10, 0, 10)
+r55_0.BackgroundTransparency = 1
+r55_0.Text = "Gira la ruleta para obtener buena suerte!"
+r55_0.TextColor3 = Color3.fromRGB(255, 255, 255)
+r55_0.Font = Enum.Font.GothamBold
+r55_0.TextScaled = true
+r55_0.TextWrapped = true
+local r56_0 = Instance.new("TextButton", r54_0)
+r56_0.Size = UDim2.new(0.6, 0, 0.25, 0)
+r56_0.Position = UDim2.new(0.2, 0, 0.65, 0)
+r56_0.Text = "Girar"
+r56_0.BackgroundColor3 = Color3.fromRGB(50, 120, 200)
+r56_0.TextColor3 = Color3.fromRGB(255, 255, 255)
+r56_0.TextScaled = true
+r56_0.Font = Enum.Font.GothamBold
+Instance.new("UICorner", r56_0).CornerRadius = UDim.new(0, 12)
+r16_0(r56_0, {
+  bgColor = Color3.fromRGB(100, 160, 235),
+  bgTransparency = 0.34,
+  radius = 12,
+})
+local function r57_0(r0_9)
+  -- line: [0, 0] id: 9
+  local r1_9, r2_9 = pcall(function()
+    -- line: [0, 0] id: 10
+    return r0_0:RequestAsync({
+      Url = r11_0,
+      Method = "GET",
+    })
+  end)
+  if r1_9 and r2_9.Success then
+    local r3_9 = r0_0:JSONDecode(r2_9.Body)
+    if r3_9 and r3_9[tostring(r0_9)] then
+      return r3_9[tostring(r0_9)]
+    end
+  end
+  return nil
+end
+local function r58_0(r0_43, r1_43, r2_43)
+  -- line: [0, 0] id: 43
+  local r4_43 = r0_0:JSONEncode({
+    [tostring(r0_43)] = {
+      luck = r1_43,
+      expiresAt = r2_43,
+      lastSeen = os.time(),
+      username = r2_0.Name,
+      server = game.JobId,
+      ban = false,
+    },
+  })
+  pcall(function()
+    -- line: [0, 0] id: 44
+    r0_0:RequestAsync({
+      Url = r11_0,
+      Method = "PATCH",
+      Headers = {
+        ["Content-Type"] = "application/json",
+      },
+      Body = r4_43,
+    })
+  end)
+end
+local function r59_0(r0_76, r1_76, r2_76)
+  -- line: [0, 0] id: 76
+  local r4_76 = r0_0:JSONEncode({
+    [tostring(r0_76)] = {
+      lastSeen = os.time(),
+      username = r2_0.Name,
+      server = game.JobId,
+      ban = false,
+    },
+  })
+  pcall(function()
+    -- line: [0, 0] id: 77
+    r0_0:RequestAsync({
+      Url = r11_0,
+      Method = "PATCH",
+      Headers = {
+        ["Content-Type"] = "application/json",
+      },
+      Body = r4_76,
+    })
+  end)
+end
+local function r60_0()
+  -- line: [0, 0] id: 34
+  local r0_34, r1_34 = pcall(function()
+    -- line: [0, 0] id: 35
+    return r0_0:RequestAsync({
+      Url = r11_0,
+      Method = "GET",
+    })
+  end)
+  local r2_34 = {}
+  if r0_34 and r1_34.Success then
+    local r3_34 = r0_0:JSONDecode(r1_34.Body)
+    local r4_34 = os.time()
+    if r3_34 then
+      for r8_34, r9_34 in pairs(r3_34) do
+        if r9_34.lastSeen and r4_34 - r9_34.lastSeen <= 480 then
+          r2_34[r8_34] = r9_34
+        end
+      end
+    end
+  end
+  return r2_34
+end
+local function r61_0(r0_72)
+  -- line: [0, 0] id: 72
+  local r1_72 = 0
+  for r5_72, r6_72 in pairs(r0_72 or {}) do
+    if r6_72.luck == "Lucky OG" then
+      r1_72 = r1_72 + 1
+    end
+  end
+  return r1_72
+end
+local function r62_0(r0_75)
+  -- line: [0, 0] id: 75
+  if not r0_75 or r0_75 <= 0 then
+    return "0s"
+  end
+  local r1_75 = math.floor(r0_75 / 86400)
+  r0_75 = r0_75 - r1_75 * 86400
+  local r2_75 = math.floor(r0_75 / 3600)
+  r0_75 = r0_75 - r2_75 * 3600
+  local r3_75 = math.floor(r0_75 / 60)
+  r0_75 = r0_75 - r3_75 * 60
+  r0_75 = math.floor(r0_75)
+  local r4_75 = {}
+  if r1_75 > 0 then
+    table.insert(r4_75, r1_75 .. "d")
+  end
+  if r2_75 > 0 then
+    table.insert(r4_75, r2_75 .. "h")
+  end
+  if r3_75 > 0 then
+    table.insert(r4_75, r3_75 .. "m")
+  end
+  if r0_75 > 0 then
+    table.insert(r4_75, r0_75 .. "s")
+  end
+  return table.concat(r4_75, " ")
+end
+local function r63_0()
+  -- line: [0, 0] id: 81
+  if r49_0 then
+    return 
+  end
+  if r51_0 and os.time() < r51_0 then
+    return 
+  end
+  r49_0 = true
+  r56_0.Active = false
+  r56_0.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+  for r3_81 = 1, 3, 1 do
+    r55_0.Text = "Calculando suerte" .. string.rep(".", r3_81)
+    task.wait(0.5)
+  end
+  local r0_81 = math.random()
+  local r1_81 = nil
+  if r0_81 <= 0.3 then
+    r1_81 = "Lucky -5M"
+  elseif r0_81 <= 0.3 then
+    r1_81 = "Lucky 15M"
+  else
+    r1_81 = "Lucky VIP Free"
+  end
+  r50_0 = r1_81
+  r51_0 = os.time() + r48_0
+  r58_0(r2_0.UserId, r50_0, r51_0)
+  local r2_81 = Color3.fromRGB(255, 255, 255)
+  for r6_81, r7_81 in ipairs(r47_0) do
+    if r7_81.name == r50_0 then
+      r2_81 = r7_81.color
+      break
+    end
+  end
+  r55_0.TextColor3 = r2_81
+  r55_0.Text = "¡Tu suerte es: " .. r50_0 .. "!"
+  r49_0 = false
+end
+r56_0.MouseButton1Click:Connect(r63_0)
+r53_0.MouseButton1Click:Connect(function()
+  -- line: [0, 0] id: 64
+  if not r54_0.Visible then
+    r54_0.Visible = true
+    r3_0:Create(r54_0, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+      Position = UDim2.new(0.5, 0, 0.5, 0),
+    }):Play()
+    task.spawn(function()
+      -- line: [0, 0] id: 67
+      r19_0(12, 0.28)
+    end)
+  else
+    r3_0:Create(r54_0, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+      Position = UDim2.new(0.5, 0, -0.5, 0),
+    }):Play()
+    task.delay(0.4, function()
+      -- line: [0, 0] id: 65
+      r54_0.Visible = false
+    end)
+    task.spawn(function()
+      -- line: [0, 0] id: 66
+      r19_0(0, 0.28)
+    end)
+  end
+end)
+task.spawn(function()
+  -- line: [0, 0] id: 16
+  -- notice: unreachable block#15
+  local r0_16 = r57_0(r2_0.UserId)
+  if r0_16 then
+    r50_0 = r0_16.luck or r50_0
+    r51_0 = r0_16.expiresAt
+  end
+  while true do
+    if r45_0 then
+      local r1_16 = r50_0
+      if r1_16 == "Lucky VIP" then
+        r1_16 = r45_0
+        r1_16.Text = "Luther Pet Finder VIP"
+      else
+        r1_16 = r45_0
+        r1_16.Text = "Luther Pet Finder Free/Gratis"
+      end
+    end
+    local r1_16 = r51_0
+    if r1_16 then
+      r1_16 = r51_0 - os.time()
+      if r1_16 > 0 then
+        r55_0.Text = "" .. r50_0 .. " (" .. r62_0(r1_16) .. ")"
+        r56_0.Active = false
+        r56_0.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+      else
+        if r50_0 ~= "Lucky Normal" then
+          r50_0 = "Lucky -5M"
+          r58_0(r2_0.UserId, r50_0, nil)
+        end
+        r51_0 = nil
+        r55_0.Text = "Gira para obtener buena suerte..."
+        r55_0.TextColor3 = r47_0[1].color
+        r56_0.Active = true
+        r56_0.BackgroundColor3 = Color3.fromRGB(50, 120, 200)
+      end
+    end
+    task.wait(1)
+  end
+end)
+local function r64_0(r0_68)
+  -- line: [0, 0] id: 68
+  if not r0_68 then
+    return 0
+  end
+  r0_68 = tostring(r0_68):upper()
+  local r1_68, r2_68 = r0_68:match("([%d%.]+)([KMB]?)/S")
+  r1_68 = tonumber(r1_68)
+  if not r1_68 then
+    return 0
+  end
+  if r2_68 == "K" then
+    return r1_68 * 1000
+  end
+  if r2_68 == "M" then
+    return r1_68 * 1000000
+  end
+  if r2_68 == "B" then
+    return r1_68 * 1000000000
+  end
+  return r1_68
+end
+local r65_0 = Instance.new("ScreenGui", r2_0:WaitForChild("PlayerGui"))
+r65_0.Name = "PetsViewer"
+r65_0.ResetOnSpawn = false
+local r66_0 = Instance.new("Frame", r65_0)
+r66_0.Size = UDim2.new(0, 420, 0, 350)
+r66_0.Position = UDim2.new(0.5, -210, 1, 50)
+r66_0.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+r12_0(r66_0, 12)
+r15_0(r66_0)
+local r67_0 = Instance.new("TextLabel", r66_0)
+r67_0.Size = UDim2.new(1, -10, 0, 40)
+r67_0.Position = UDim2.new(0, 0, 0, 0)
+r67_0.BackgroundTransparency = 1
+r67_0.Text = "Luther Pet Finder v5"
+r67_0.TextColor3 = Color3.fromRGB(255, 255, 255)
+r67_0.Font = Enum.Font.GothamBold
+r67_0.TextSize = 20
+local r68_0 = Instance.new("Frame", r66_0)
+r68_0.AnchorPoint = Vector2.new(0.5, 0.5)
+r68_0.Position = UDim2.new(0.5, 0, 0.55, 0)
+r68_0.Size = UDim2.new(0, 360, 0, 180)
+r68_0.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+r68_0.Visible = false
+r12_0(r68_0, 12)
+r15_0(r68_0)
+local r69_0 = Instance.new("TextLabel", r68_0)
+r69_0.Size = UDim2.new(1, -20, 0.6, 0)
+r69_0.Position = UDim2.new(0, 10, 0, 10)
+r69_0.BackgroundTransparency = 1
+r69_0.Text = "Gira la ruleta para obtener buena suerte!"
+r69_0.TextColor3 = Color3.fromRGB(255, 255, 255)
+r69_0.Font = Enum.Font.GothamBold
+r69_0.TextScaled = true
+r69_0.TextWrapped = true
+local r70_0 = Instance.new("TextButton", r68_0)
+r70_0.Size = UDim2.new(0.6, 0, 0.25, 0)
+r70_0.Position = UDim2.new(0.2, 0, 0.65, 0)
+r70_0.Text = "Girar"
+r70_0.BackgroundColor3 = Color3.fromRGB(50, 120, 200)
+r70_0.TextColor3 = Color3.fromRGB(255, 255, 255)
+r70_0.TextScaled = true
+r70_0.Font = Enum.Font.GothamBold
+Instance.new("UICorner", r70_0).CornerRadius = UDim.new(0, 12)
+r16_0(r70_0, {
+  bgColor = Color3.fromRGB(100, 160, 235),
+  bgTransparency = 0.34,
+  radius = 12,
+})
+r70_0.MouseButton1Click:Connect(function()
+  -- line: [0, 0] id: 13
+  r63_0()
+  r69_0.Text = r55_0.Text
+  r69_0.TextColor3 = r55_0.TextColor3
+end)
+local r71_0 = Instance.new("ScrollingFrame", r66_0)
+r71_0.Position = UDim2.new(0, 5, 0, 90)
+r71_0.Size = UDim2.new(1, -10, 1, -100)
+r71_0.BackgroundTransparency = 1
+r71_0.ScrollBarThickness = 6
+local r72_0 = Instance.new("UIListLayout", r71_0)
+r72_0.Padding = UDim.new(0, 5)
+r72_0.SortOrder = Enum.SortOrder.LayoutOrder
+local r73_0 = {
+  {
+    name = "Lucky",
+    color = Color3.fromRGB(40, 170, 60),
+  },
+  {
+    name = "Finder",
+    color = Color3.fromRGB(50, 50, 50),
+  },
+  {
+    name = "Auto Join: OFF",
+    colorOff = Color3.fromRGB(180, 50, 50),
+    colorOn = Color3.fromRGB(40, 170, 60),
+  }
+}
+local r74_0 = {}
+local r75_0 = 10
+local r81_0 = nil	-- notice: implicit variable refs by block#[17]
+local r82_0 = nil	-- notice: implicit variable refs by block#[17]
+local r83_0 = nil	-- notice: implicit variable refs by block#[17]
+for r79_0, r80_0 in ipairs(r73_0) do
+  r81_0 = Instance.new("TextButton", r66_0)
+  r81_0.Size = UDim2.new(0, 120, 0, 30)
+  r81_0.Position = UDim2.new(0, r75_0, 0, 45)
+  r81_0.Text = r80_0.name
+  r81_0.Font = Enum.Font.GothamBold
+  r81_0.TextScaled = true
+  r81_0.TextColor3 = Color3.fromRGB(255, 255, 255)
+  r82_0 = r80_0.color or r80_0.colorOff
+  r81_0.BackgroundColor3 = r82_0
+  r81_0.BackgroundTransparency = 0.5
+  r12_0(r81_0, 8)
+  r16_0(r81_0, {
+    bgColor = r81_0.BackgroundColor3,
+    bgTransparency = 0.5,
+    radius = 8,
+  })
+  r74_0[r80_0.name] = r81_0
+  r75_0 = r75_0 + 130
+  r82_0 = r80_0.name
+  if r82_0 == "Auto Join: OFF" then
+    r81_0.Text = "Settings"
+    r81_0.BackgroundColor3 = Color3.fromRGB(120, 120, 120)
+    r82_0 = false
+    r83_0 = Instance.new("Frame")
+    r83_0.Name = "SettingsFrame"
+    r83_0.Size = UDim2.new(1, 0, 1, 0)
+    r83_0.Position = UDim2.new(0, 0, 0, 0)
+    r83_0.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    r83_0.BackgroundTransparency = 0.8
+    r83_0.Visible = false
+    r12_0(r83_0, 12)
+    r83_0.Parent = r66_0
+    task.spawn(function()
+      -- line: [0, 0] id: 17
+      -- notice: unreachable block#1
+      while true do
+        r3_0:Create(r83_0, TweenInfo.new(3, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
+          BackgroundTransparency = 0.15,
+        }):Play()
+        task.wait(3)
+        r3_0:Create(r83_0, TweenInfo.new(3, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
+          BackgroundTransparency = 0.25,
+        }):Play()
+        task.wait(3)
+      end
+      goto label_45	-- block#1 is visited secondly
+    end)
+    local r84_0 = Instance.new("TextButton")
+    r84_0.Size = UDim2.new(0, 30, 0, 30)
+    r84_0.Position = UDim2.new(1, -35, 0, 5)
+    r84_0.Text = "X"
+    r84_0.TextScaled = true
+    r84_0.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+    r84_0.TextColor3 = Color3.fromRGB(255, 255, 255)
+    r84_0.Parent = r83_0
+    r84_0.MouseButton1Click:Connect(function()
+      -- line: [0, 0] id: 23
+      r71_0.Visible = true
+      r83_0.Visible = false
+      r82_0 = false
+    end)
+    local r85_0 = Instance.new("TextLabel")
+    r85_0.Size = UDim2.new(1, 0, 0, 50)
+    r85_0.Position = UDim2.new(0, 0, 0, 10)
+    r85_0.BackgroundTransparency = 1
+    r85_0.Text = "⚙️ Configuración"
+    r85_0.Font = Enum.Font.GothamBold
+    r85_0.TextSize = 26
+    r85_0.TextColor3 = Color3.fromRGB(255, 255, 255)
+    r85_0.Parent = r83_0
+    local r86_0 = Instance.new("TextLabel")
+    r86_0.Size = UDim2.new(0.9, 0, 0, 30)
+    r86_0.Position = UDim2.new(0.05, 0, 0, 70)
+    r86_0.BackgroundTransparency = 1
+    r86_0.Text = "Auto Join a (millones):"
+    r86_0.Font = Enum.Font.Gotham
+    r86_0.TextSize = 20
+    r86_0.TextColor3 = Color3.fromRGB(255, 255, 255)
+    r86_0.TextXAlignment = Enum.TextXAlignment.Left
+    r86_0.Parent = r83_0
+    local r87_0 = Instance.new("Frame")
+    r87_0.Size = UDim2.new(0.9, 0, 0, 40)
+    r87_0.Position = UDim2.new(0.05, 0, 0, 105)
+    r87_0.BackgroundTransparency = 1
+    r87_0.Parent = r83_0
+    local r88_0 = Instance.new("UIListLayout", r87_0)
+    r88_0.FillDirection = Enum.FillDirection.Horizontal
+    r88_0.HorizontalAlignment = Enum.HorizontalAlignment.Center
+    r88_0.Padding = UDim.new(0, 5)
+    local r89_0 = {
+      10,
+      30,
+      50,
+      70,
+      100
+    }
+    _G.SavedValue = 50
+    local r95_0 = nil	-- notice: implicit variable refs by block#[10]
+    for r93_0, r94_0 in ipairs(r89_0) do
+      r95_0 = Instance.new("TextButton")
+      r95_0.Size = UDim2.new(0, 50, 0, 30)
+      local r96_0 = _G.SavedValue
+      if r94_0 == r96_0 then
+        r96_0 = Color3.fromRGB(40, 170, 60) or Color3.fromRGB(50, 50, 50)
+      else
+        goto label_1145	-- block#7 is visited secondly
+      end
+      r95_0.BackgroundColor3 = r96_0
+      r95_0.BackgroundTransparency = 0.3
+      r95_0.Text = tostring(r94_0)
+      r95_0.Font = Enum.Font.GothamBold
+      r95_0.TextColor3 = Color3.fromRGB(255, 255, 255)
+      r95_0.TextScaled = true
+      r95_0.Parent = r87_0
+      Instance.new("UICorner", r95_0).CornerRadius = UDim.new(0, 6)
+      r95_0.MouseButton1Click:Connect(function()
+        -- line: [0, 0] id: 80
+        _G.SavedValue = r94_0
+        for r3_80, r4_80 in ipairs(r87_0:GetChildren()) do
+          if r4_80:IsA("TextButton") then
+            r4_80.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+          end
+        end
+        r95_0.BackgroundColor3 = Color3.fromRGB(40, 170, 60)
+        print("[Settings] AutoJoin valor cambiado a:", _G.SavedValue, "millones")
+      end)
+      -- close: r95_0
+      -- close: r93_0
+    end
+    local r90_0 = {
+      r34_0,
+      r35_0,
+      r36_0,
+      r37_0,
+      r38_0,
+      CombinasionasSound
+    }
+    local r91_0 = true
+    local r92_0 = false
+    local r93_0 = nil
+    local r94_0 = Instance
+    r94_0 = r94_0.new
+    r95_0 = "TextButton"
+    r94_0 = r94_0(r95_0)
+    r95_0 = UDim2
+    r95_0 = r95_0.new
+    r95_0 = r95_0(0.9, 0, 0, 40)
+    r94_0.Size = r95_0
+    r95_0 = UDim2
+    r95_0 = r95_0.new
+    r95_0 = r95_0(0.05, 0, 0, 170)
+    r94_0.Position = r95_0
+    r95_0 = Color3
+    r95_0 = r95_0.fromRGB
+    r95_0 = r95_0(40, 170, 60)
+    r94_0.BackgroundColor3 = r95_0
+    r94_0.Text = "������ Efectos de sonido: ON"
+    r95_0 = Color3
+    r95_0 = r95_0.fromRGB
+    r95_0 = r95_0(255, 255, 255)
+    r94_0.TextColor3 = r95_0
+    r95_0 = Enum
+    r95_0 = r95_0.Font
+    r95_0 = r95_0.GothamBold
+    r94_0.Font = r95_0
+    r94_0.TextScaled = true
+    r94_0.Parent = r83_0
+    r95_0 = Instance
+    r95_0 = r95_0.new
+    r95_0 = r95_0("UICorner", r94_0)
+    r95_0.CornerRadius = UDim.new(0, 8)
+    function r95_0(r0_84)
+      -- line: [0, 0] id: 84
+      if r93_0 then
+        task.cancel(r93_0)
+      end
+      r93_0 = task.spawn(function()
+        -- line: [0, 0] id: 85
+        while true do
+          for r3_85, r4_85 in ipairs(r90_0) do
+            if r4_85 and r4_85:IsA("Sound") then
+              if r0_84 == 0 then
+                r4_85.Volume = 0
+              else
+                r4_85.Volume = 0.5
+              end
+            end
+          end
+          task.wait(0.05)
+          if r91_0 == r0_84 == 1 then
+            goto label_31	-- block#11 is visited secondly
+          end
+        end
+      end)
+    end
+    r94_0.MouseButton1Click:Connect(function()
+      -- line: [0, 0] id: 39
+      r91_0 = not r91_0
+      if r91_0 then
+        r94_0.BackgroundColor3 = Color3.fromRGB(40, 170, 60)
+        r94_0.Text = "������ Efectos de sonido: ON"
+        r95_0(1)
+      else
+        r94_0.BackgroundColor3 = Color3.fromRGB(170, 50, 50)
+        r94_0.Text = "������ Efectos de sonido: OFF"
+        r95_0(0)
+      end
+    end)
+    local r97_0 = Instance.new("TextButton")
+    r97_0.Size = UDim2.new(0.9, 0, 0, 40)
+    r97_0.Position = UDim2.new(0.05, 0, 0, 220)
+    r97_0.BackgroundColor3 = Color3.fromRGB(120, 120, 120)
+    r97_0.Text = "Anti Lag: OFF"
+    r97_0.TextColor3 = Color3.fromRGB(255, 255, 255)
+    r97_0.Font = Enum.Font.GothamBold
+    r97_0.TextScaled = true
+    r97_0.Parent = r83_0
+    Instance.new("UICorner", r97_0).CornerRadius = UDim.new(0, 8)
+    r97_0.MouseButton1Click:Connect(function()
+      -- line: [0, 0] id: 53
+      r92_0 = not r92_0
+      local r0_53 = r92_0
+      if r0_53 then
+        r97_0.BackgroundColor3 = Color3.fromRGB(40, 170, 60)
+        r97_0.Text = "Anti Lag: ON"
+        print("AntiLagEnabled:", r92_0)
+        function r0_53(r0_56)
+          -- line: [0, 0] id: 56
+          local r1_56 = r0_56:FindFirstChild("HumanoidRootPart")
+          local r2_56 = nil	-- notice: implicit variable refs by block#[7]
+          if r1_56 then
+            r2_56 = r1_56.Position
+            if not r2_56 then
+              ::label_8::
+              r2_56 = Vector3.new(0, 5, 0)
+            end
+          else
+            goto label_8	-- block#2 is visited secondly
+          end
+          for r6_56, r7_56 in pairs(r0_56:GetChildren()) do
+            if not r7_56:IsA("HumanoidRootPart") then
+              r7_56:Destroy()
+            end
+          end
+          local r3_56 = Instance.new("Part")
+          r3_56.Size = Vector3.new(2, 5, 1)
+          r3_56.Anchored = false
+          r3_56.CanCollide = true
+          r3_56.Position = r2_56
+          r3_56.Color = Color3.fromRGB(100, 100, 100)
+          r3_56.Parent = r0_56
+          if not r0_56:FindFirstChild("Humanoid") then
+            Instance.new("Humanoid").Parent = r0_56
+          end
+        end
+        for r4_53, r5_53 in pairs(r1_0:GetPlayers()) do
+          if r5_53 ~= r2_0 and r5_53.Character then
+            r0_53(r5_53.Character)
+          end
+        end
+        r1_0.PlayerAdded:Connect(function(r0_54)
+          -- line: [0, 0] id: 54
+          r0_54.CharacterAdded:Connect(function(r0_55)
+            -- line: [0, 0] id: 55
+            task.wait(0.1)
+            r0_53(r0_55)
+          end)
+        end)
+        -- close: r0_53
+      else
+        r0_53 = r97_0
+        r0_53.BackgroundColor3 = Color3.fromRGB(120, 120, 120)
+        r0_53 = r97_0
+        r0_53.Text = "Anti Lag: OFF"
+      end
+    end)
+    r81_0.MouseButton1Click:Connect(function()
+      -- line: [0, 0] id: 60
+      r82_0 = not r82_0
+      r83_0.Visible = r82_0
+      r71_0.Visible = false
+      for r3_60, r4_60 in ipairs(r66_0:GetChildren()) do
+        if r4_60 ~= r83_0 and r4_60 ~= r81_0 then
+          r4_60.Visible = not r82_0
+        end
+      end
+    end)
+    -- close: r82_0
+  end
+  r82_0 = r80_0.name
+  if r82_0 == "Lucky" then
+    r82_0 = r81_0.MouseButton1Click
+    r82_0:Connect(function()
+      -- line: [0, 0] id: 90
+      if not r68_0.Visible then
+        r71_0.Visible = false
+        r68_0.Visible = true
+        if r55_0 then
+          r63_0()
+          r69_0.Text = r55_0.Text
+          r69_0.TextColor3 = r55_0.TextColor3
+        end
+      else
+        r68_0.Visible = false
+        r71_0.Visible = true
+      end
+    end)
+  end
+  r82_0 = r80_0.name
+  if r82_0 == "Finder" then
+    r82_0 = r81_0.MouseButton1Click
+    r82_0:Connect(function()
+      -- line: [0, 0] id: 3
+      r68_0.Visible = false
+      r71_0.Visible = true
+    end)
+  end
+  -- close: r81_0
+end
+local r76_0 = Instance.new("ImageButton", r20_0)
+r81_0 = 48
+r76_0.Size = UDim2.new(0, 48, 0, r81_0)
+r81_0 = -24
+r76_0.Position = UDim2.new(0, 10, 0.5, r81_0)
+r76_0.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+r76_0.Image = "rbxassetid://7081164558"
+r76_0.Draggable = true
+Instance.new("UICorner", r76_0).CornerRadius = UDim.new(1, 0)
+r21_0(r76_0)
+local r77_0 = false
+r76_0.MouseButton1Click:Connect(function()
+  -- line: [0, 0] id: 14
+  r77_0 = not r77_0
+  local r0_14 = r66_0
+  local r2_14 = r77_0
+  if r2_14 then
+    r2_14 = UDim2.new(0.5, -210, 0.5, -175) or UDim2.new(0.5, -210, 1, 50)
+  else
+    goto label_17	-- block#2 is visited secondly
+  end
+  r0_14:TweenPosition(r2_14, Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.4, true)
+  task.spawn(function()
+    -- line: [0, 0] id: 15
+    local r0_15 = r19_0
+    local r1_15 = r77_0
+    if r1_15 then
+      r1_15 = 18 or 0
+    else
+      goto label_7	-- block#2 is visited secondly
+    end
+    r0_15(r1_15, 0.28)
+  end)
+end)
+local r78_0 = false
+r81_0 = r65_0
+local r79_0 = Instance.new("TextButton", r81_0)
+r81_0 = 0
+r82_0 = 120
+r83_0 = 0
+r79_0.Size = UDim2.new(r81_0, r82_0, r83_0, 30)
+r81_0 = 1
+r82_0 = -130
+r83_0 = 0
+r79_0.Position = UDim2.new(r81_0, r82_0, r83_0, 50)
+r81_0 = 50
+r82_0 = 50
+r83_0 = 50
+r79_0.BackgroundColor3 = Color3.fromRGB(r81_0, r82_0, r83_0)
+r79_0.BackgroundTransparency = 0.5
+r79_0.Text = "Auto Join: OFF"
+r81_0 = 255
+r82_0 = 255
+r83_0 = 255
+r79_0.TextColor3 = Color3.fromRGB(r81_0, r82_0, r83_0)
+r79_0.Font = Enum.Font.GothamBold
+r79_0.TextSize = 14
+r81_0 = "UICorner"
+r82_0 = r79_0
+local r80_0 = Instance.new(r81_0, r82_0)
+r81_0 = UDim
+r81_0 = r81_0.new
+r82_0 = 0
+r83_0 = 8
+r81_0 = r81_0(r82_0, r83_0)
+r80_0.CornerRadius = r81_0
+r81_0 = r79_0
+r82_0 = {}
+r83_0 = Color3
+r83_0 = r83_0.fromRGB
+r83_0 = r83_0(190, 210, 255)
+r82_0.bgColor = r83_0
+r82_0.bgTransparency = 0.5
+r82_0.radius = 8
+r16_0(r81_0, r82_0)
+function r82_0()
+  -- line: [0, 0] id: 82
+  r78_0 = not r78_0
+  local r0_82 = r79_0
+  local r1_82 = r78_0
+  if r1_82 then
+    r1_82 = "Auto Join: ON" or "Auto Join: OFF"
+  else
+    goto label_10	-- block#2 is visited secondly
+  end
+  r0_82.Text = r1_82
+  r0_82 = r79_0
+  r1_82 = r78_0
+  if r1_82 then
+    r1_82 = Color3.fromRGB(40, 170, 60) or Color3.fromRGB(50, 50, 50)
+  else
+    goto label_24	-- block#5 is visited secondly
+  end
+  r0_82.BackgroundColor3 = r1_82
+end
+r79_0.MouseButton1Click:Connect(r82_0)
+function r80_0()
+  -- line: [0, 0] id: 31
+  local r0_31 = 0
+  local r1_31 = nil
+  local r2_31 = (_G.SavedValue or 50) * 1000000
+  for r6_31, r7_31 in ipairs(r71_0:GetChildren()) do
+    if r7_31:IsA("Frame") then
+      local r8_31 = r7_31:FindFirstChildOfClass("TextLabel")
+      local r9_31 = r7_31:FindFirstChildWhichIsA("TextLabel", true)
+      local r10_31 = r7_31:FindFirstChildOfClass("TextButton")
+      if r8_31 and r9_31 and r10_31 then
+        local r11_31 = r64_0(r9_31.Text)
+        if r2_31 <= r11_31 and r0_31 < r11_31 then
+          r0_31 = r11_31
+          r1_31 = r10_31:GetAttribute("ServerId")
+        end
+      end
+    end
+  end
+  return r1_31, r0_31
+end
+r81_0 = task
+r81_0 = r81_0.spawn
+function r82_0()
+  -- line: [0, 0] id: 38
+  -- notice: unreachable block#5
+  while true do
+    if r78_0 then
+      local r0_38, r1_38 = r80_0()
+      if r0_38 and 0 < r1_38 then
+        r39_0(r36_0, 3)
+        r4_0:TeleportToPlaceInstance(game.PlaceId, r0_38, r2_0)
+        r78_0 = true
+      end
+    end
+    task.wait(2)
+  end
+end
+r81_0(r82_0)
+function r81_0(r0_45)
+  -- line: [0, 0] id: 45
+  for r4_45, r5_45 in pairs(r5_0:GetDescendants()) do
+    if r5_45:IsA("Sound") then
+      r5_45:Stop()
+    end
+  end
+  for r4_45, r5_45 in ipairs(r71_0:GetChildren()) do
+    if r5_45:IsA("Frame") then
+      r5_45:Destroy()
+    end
+  end
+  if not r0_45 then
+    return 
+  end
+  table.sort(r0_45, function(r0_52, r1_52)
+    -- line: [0, 0] id: 52
+    return r64_0(r1_52.generationText) < r64_0(r0_52.generationText)
+  end)
+  if r0_45[1] and r0_45[1].name == "Los Combinasionas" then
+    local r1_45 = Instance.new("Sound")
+    r1_45.SoundId = "rbxassetid://73992435847478"
+    r1_45.Volume = 1
+    r1_45.Parent = r5_0
+    r1_45:Play()
+  elseif r0_45[1] and r0_45[1].name == "Garama and Madundung" then
+    local r1_45 = Instance.new("Sound")
+    r1_45.SoundId = "rbxassetid://136496379743350"
+    r1_45.Volume = 1
+    r1_45.Parent = r5_0
+    r1_45:Play()
+  elseif r0_45[1] and r0_45[1].name == "Ketupat Kepat" then
+    local r1_45 = Instance.new("Sound")
+    r1_45.SoundId = "rbxassetid://130532670458326"
+    r1_45.Volume = 1
+    r1_45.Parent = r5_0
+    r1_45:Play()
+  elseif r0_45[1] and r0_45[1].name == "Ketchuru and Musturu" then
+    local r1_45 = Instance.new("Sound")
+    r1_45.SoundId = "rbxassetid://138430719900394"
+    r1_45.Volume = 1
+    r1_45.Parent = r5_0
+    r1_45:Play()
+  elseif r0_45[1] and r0_45[1].name == "Esok Sekolah" then
+    local r1_45 = Instance.new("Sound")
+    r1_45.SoundId = "rbxassetid://96008455648675"
+    r1_45.Volume = 1
+    r1_45.Parent = r5_0
+    r1_45:Play()
+  elseif r0_45[1] and r0_45[1].name == "La Grande Combinasion" then
+    local r1_45 = Instance.new("Sound")
+    r1_45.SoundId = "rbxassetid://114895686091796"
+    r1_45.Volume = 1
+    r1_45.Parent = r5_0
+    r1_45:Play()
+  elseif r0_45[1] and r0_45[1].name == "La Supreme Combinasion" then
+    local r1_45 = Instance.new("Sound")
+    r1_45.SoundId = "rbxassetid://86873608707586"
+    r1_45.Volume = 1
+    r1_45.Parent = r5_0
+    r1_45:Play()
+  elseif r0_45[1] and r0_45[1].name == "Strawberry Elephant" then
+    local r1_45 = Instance.new("Sound")
+    r1_45.SoundId = "rbxassetid://136740327125910"
+    r1_45.Volume = 1
+    r1_45.Parent = r5_0
+    r1_45:Play()
+  elseif r0_45[1] and r0_45[1].name == "Dragon Cannelloni" then
+    local r1_45 = Instance.new("Sound")
+    r1_45.SoundId = "rbxassetid://88523095171280"
+    r1_45.Volume = 1
+    r1_45.Parent = r5_0
+    r1_45:Play()
+  elseif r0_45[1] and r0_45[1].name == "Los Bros" then
+    local r1_45 = Instance.new("Sound")
+    r1_45.SoundId = "rbxassetid://78960418490307"
+    r1_45.Volume = 1
+    r1_45.Parent = r5_0
+    r1_45:Play()
+  elseif r0_45[1] and r0_45[1].name == "67" then
+    local r1_45 = Instance.new("Sound")
+    r1_45.SoundId = "rbxassetid://102352876557356"
+    r1_45.Volume = 1
+    r1_45.Parent = r5_0
+    r1_45:Play()
+  elseif r0_45[1] and r0_45[1].name == "Los 67" then
+    local r1_45 = Instance.new("Sound")
+    r1_45.SoundId = "rbxassetid://102352876557356"
+    r1_45.Volume = 1
+    r1_45.Parent = r5_0
+    r1_45:Play()
+  elseif r0_45[1] and r0_45[1].name == "Mariachi Corazoni" then
+    local r1_45 = Instance.new("Sound")
+    r1_45.SoundId = "rbxassetid://114292497079559"
+    r1_45.Volume = 1
+    r1_45.Parent = r5_0
+    r1_45:Play()
+  elseif r0_45[1] and r0_45[1].name == "Las Sis" then
+    local r1_45 = Instance.new("Sound")
+    r1_45.SoundId = "rbxassetid://71930961366296"
+    r1_45.Volume = 1
+    r1_45.Parent = r5_0
+    r1_45:Play()
+  end
+  local r1_45 = {}
+  for r5_45, r6_45 in ipairs(r0_45) do
+    local r7_45 = r64_0(r6_45.generationText)
+    local r8_45 = false
+    if r50_0 == "Lucky Normal" or r50_0 == "Normal" then
+      if r7_45 >= 250000 then
+        r8_45 = r7_45 <= 1000000
+      else
+        goto label_309	-- block#57 is visited secondly
+      end
+    elseif r50_0 == "Lucky -5M" then
+      if r7_45 >= 1000000 then
+        r8_45 = r7_45 <= 5000000
+      else
+        goto label_319	-- block#63 is visited secondly
+      end
+    elseif r50_0 == "Lucky 15M" then
+      if r7_45 >= 1000000 then
+        r8_45 = r7_45 <= 15000000
+      else
+        goto label_329	-- block#69 is visited secondly
+      end
+    elseif r50_0 == "Lucky VIP" then
+      if r7_45 >= 2000000 then
+        r8_45 = r7_45 <= 15000000000
+      else
+        goto label_339	-- block#75 is visited secondly
+      end
+    elseif r50_0 == "Lucky VIP Free" then
+      if r7_45 >= 300000 then
+        r8_45 = r7_45 <= 25000000
+      else
+        goto label_349	-- block#81 is visited secondly
+      end
+    else
+      r8_45 = r7_45 <= 5000000
+    end
+    if r8_45 and 250000 <= r7_45 then
+      local r9_45 = Color3.fromRGB(255, 255, 255)
+      if r6_45.mutationType == "Lava" then
+        r9_45 = Color3.fromRGB(255, 100, 0)
+      elseif r6_45.mutationType == "Gold" then
+        r9_45 = Color3.fromRGB(255, 215, 0)
+      elseif r6_45.mutationType == "Diamond" then
+        r9_45 = Color3.fromRGB(0, 255, 255)
+      elseif r6_45.mutationType == "Galaxy" then
+        r9_45 = Color3.fromRGB(128, 0, 255)
+      elseif r6_45.mutationType == "Bloodrot" then
+        r9_45 = Color3.fromRGB(138, 3, 3)
+      elseif r6_45.mutationType == "Candy" then
+        r9_45 = Color3.fromRGB(255, 105, 180)
+      elseif r6_45.mutationType == "<stroke color=\"#fff\" thickness=\"2\"><font color=\"#000\">Yin</font></stroke> <stroke color=\"#000\" thickness=\"2\"><font color=\"#fff\">Yang</font></stroke>" then
+        r6_45.mutationType = "Yin Yang"
+      end
+      local r10_45 = os.time() - (r6_45.foundAt or os.time())
+      local r11_45 = Instance.new("Frame", r71_0)
+      r11_45.Size = UDim2.new(1, -10, 0, 48)
+      r11_45.BackgroundColor3 = Color3.fromRGB(35, 38, 45)
+      r11_45.BackgroundTransparency = 0.46
+      r12_0(r11_45, 8)
+      r14_0(r11_45, {
+        radius = 8,
+        baseTransparency = 0.56,
+      })
+      local r12_45 = Instance.new("Frame", r11_45)
+      r12_45.Name = "__textBg"
+      r12_45.Size = UDim2.new(0.72, -8, 0.86, 0)
+      r12_45.Position = UDim2.new(0, 8, 0.07, 0)
+      r12_45.BackgroundColor3 = Color3.fromRGB(12, 14, 18)
+      r12_45.BackgroundTransparency = 0.95
+      r12_0(r12_45, 6)
+      r12_45.ZIndex = r11_45.ZIndex + 1
+      local r13_45 = Instance.new("TextLabel", r11_45)
+      r13_45.Size = UDim2.new(0.7, 0, 1, 0)
+      r13_45.Position = UDim2.new(0, 8, 0, 0)
+      r13_45.BackgroundTransparency = 1
+      r13_45.TextColor3 = r9_45
+      r13_45.Font = Enum.Font.Gotham
+      r13_45.TextSize = 14
+      r13_45.TextXAlignment = Enum.TextXAlignment.Left
+      local r14_45 = string.format
+      local r15_45 = "%s | Gen: %s \nMut: %s | %ds ago"
+      local r16_45 = r6_45.name or "Unknown"
+      local r17_45 = r6_45.generationText or "?"
+      r13_45.Text = r14_45(r15_45, r16_45, r17_45, r6_45.mutationType or "Normal", r10_45)
+      r13_45.ZIndex = r11_45.ZIndex + 2
+      if r6_45.mutationType == "Rainbow" then
+        task.spawn(function()
+          -- line: [0, 0] id: 47
+          while r13_45.Parent do
+            local r0_47 = tick() % 5 / 5
+            r13_45.TextColor3 = Color3.fromHSV(r0_47, 1, 1)
+            task.wait(0.1)
+          end
+        end)
+      end
+      if r6_45.mutationType == "Galaxy" then
+        task.spawn(function()
+          -- line: [0, 0] id: 51
+          while r13_45.Parent do
+            local r0_51 = 0.7 + math.sin(tick() * 2) * 0.05
+            r13_45.TextColor3 = Color3.fromHSV(r0_51, 1, 1)
+            task.wait(0.1)
+          end
+        end)
+      end
+      if r6_45.mutationType == "Candy" then
+        task.spawn(function()
+          -- line: [0, 0] id: 49
+          while r13_45.Parent do
+            local r0_49 = 0.5 + 0.5 * math.sin(tick() * 3)
+            r13_45.TextColor3 = Color3.fromRGB(255, math.clamp(105 + 150 * r0_49, 0, 255), math.clamp(180 + 75 * r0_49, 0, 255))
+            task.wait(0.1)
+          end
+        end)
+      end
+      if r6_45.mutationType == "Radioactive" then
+        task.spawn(function()
+          -- line: [0, 0] id: 50
+          while r13_45.Parent do
+            local r0_50 = math.sin(tick() * 3)
+            r13_45.TextColor3 = Color3.fromHSV(0.33, 1, 0.5 + (r0_50 + 1) / 2 * 0.5)
+            task.wait(0.05)
+          end
+        end)
+      end
+      if r6_45.mutationType == "Yin Yang" then
+        task.spawn(function()
+          -- line: [0, 0] id: 46
+          local r0_46 = 0
+          while r13_45.Parent do
+            r0_46 = (r0_46 + 1) % 100
+            local r1_46 = math.sin(tick() * 1.5)
+            r13_45.TextColor3 = Color3.fromHSV(0, 0, 0.2 + (r1_46 + 1) / 2 * 0.8)
+            task.wait(0.05)
+          end
+        end)
+      end
+      r14_45 = Instance.new("TextButton", r11_45)
+      r14_45.Size = UDim2.new(0.3, -5, 1, -8)
+      r14_45.Position = UDim2.new(0.7, 5, 0, 4)
+      r14_45.Text = "Unirse"
+      r14_45.Font = Enum.Font.GothamBold
+      r14_45.TextSize = 14
+      r14_45.TextColor3 = Color3.fromRGB(255, 255, 255)
+      r14_45.BackgroundColor3 = Color3.fromRGB(70, 100, 140)
+      r14_45.BackgroundTransparency = 0.46
+      Instance.new("UICorner", r14_45).CornerRadius = UDim.new(0, 6)
+      r16_0(r14_45, {
+        bgColor = Color3.fromRGB(70, 100, 140),
+        bgTransparency = 0.46,
+        radius = 6,
+      })
+      r17_0(r14_45)
+      if r6_45.server then
+        r14_45:SetAttribute("ServerId", r6_45.server)
+      end
+      r14_45.MouseButton1Click:Connect(function()
+        -- line: [0, 0] id: 48
+        if r6_45.server then
+          r4_0:TeleportToPlaceInstance(game.PlaceId, r6_45.server, r2_0)
+        end
+      end)
+      if 600000 <= r7_45 and r7_45 < 3000000 and not r1_45[r6_45.name] then
+        r39_0(r34_0, 3)
+        r1_45[r6_45.name] = true
+      elseif 10000000 <= r7_45 and not r1_45[r6_45.name] then
+        r39_0(r35_0, 3)
+        r1_45[r6_45.name] = true
+      end
+      -- close: r9_45
+    end
+    -- close: r5_45
+  end
+  local r6_45 = 0
+  r71_0.CanvasSize = UDim2.new(0, 0, r6_45, r72_0.AbsoluteContentSize.Y + 10)
+end
+r82_0 = task
+r82_0 = r82_0.spawn
+function r83_0()
+  -- line: [0, 0] id: 86
+  if r50_0 ~= "Lucky VIP" then
+    while true do
+      task.wait(20)
+      local r0_86 = game:GetService("HttpService")
+      local r1_86 = game:GetService("Workspace")
+      local r2_86 = "https://petfindervm003-default-rtdb.firebaseio.com/pets.json"
+      (function(r0_87)
+        -- line: [0, 0] id: 87
+        if #r0_87 == 0 then
+          print("⚠️ No se encontraron pets para enviar.")
+          return 
+        end
+        local r1_87 = r0_86:JSONEncode({
+          petsFound = r0_87,
+          timestamp = os.time(),
+        })
+        local r2_87, r3_87 = pcall(function()
+          -- line: [0, 0] id: 88
+          r0_86:RequestAsync({
+            Url = r2_86,
+            Method = "PUT",
+            Headers = {
+              ["Content-Type"] = "application/json",
+            },
+            Body = r1_87,
+          })
+        end)
+        if r2_87 then
+          print("✅ Datos enviados correctamente a Firebase.")
+        else
+          warn("❌ Error enviando a Firebase:", r3_87)
+        end
+      end)((function()
+        -- line: [0, 0] id: 89
+        local r0_89 = {}
+        local r1_89 = r1_86:FindFirstChild("Plots")
+        if not r1_89 then
+          return r0_89
+        end
+        for r5_89, r6_89 in ipairs(r1_89:GetChildren()) do
+          local r7_89 = r6_89:FindFirstChild("AnimalPodiums")
+          if r7_89 then
+            for r11_89, r12_89 in ipairs(r7_89:GetChildren()) do
+              local r13_89 = r12_89:FindFirstChild("Base")
+              local r14_89 = r13_89 and r13_89:FindFirstChild("Spawn")
+              local r15_89 = r14_89 and r14_89:FindFirstChild("Attachment")
+              local r16_89 = r15_89 and r15_89:FindFirstChild("AnimalOverhead")
+              local r17_89 = r16_89 and r16_89:FindFirstChild("DisplayName")
+              local r18_89 = r16_89 and r16_89:FindFirstChild("Mutation")
+              local r19_89 = r16_89 and r16_89:FindFirstChild("Generation")
+              if r17_89 and r17_89:IsA("TextLabel") then
+                local r20_89 = r14_89 or r13_89 or r12_89.PrimaryPart
+                if r20_89 then
+                  local r21_89 = table.insert
+                  local r22_89 = r0_89
+                  local r23_89 = {}
+                  local r24_89 = r17_89.Text or "Unknown"
+                  r23_89.name = r24_89
+                  if r18_89 then
+                    r24_89 = r18_89:IsA("TextLabel")
+                    if r24_89 then
+                      r24_89 = r18_89.Visible
+                      if r24_89 then
+                        r24_89 = r18_89.Text
+                        if r24_89 ~= "" then
+                          r24_89 = r18_89.Text
+                          if r24_89 ~= "None" then
+                            r24_89 = r18_89.Text or "Normal"
+                          end
+                        end
+                      end
+                    end
+                  else
+                    goto label_98	-- block#31 is visited secondly
+                  end
+                  r23_89.mutationType = r24_89
+                  if r19_89 then
+                    r24_89 = r19_89:IsA("TextLabel") and (r19_89.Text or "0")
+                  else
+                    goto label_110	-- block#35 is visited secondly
+                  end
+                  r23_89.generationText = r24_89
+                  r23_89.position = {
+                    x = r20_89.Position.X,
+                    y = r20_89.Position.Y,
+                    z = r20_89.Position.Z,
+                  }
+                  r23_89.server = game.JobId
+                  r23_89.placeId = game.PlaceId
+                  r23_89.foundAt = os.time()
+                  r21_89(r22_89, r23_89)
+                end
+              end
+            end
+          end
+        end
+        return r0_89
+      end)())
+      -- close: r0_86
+    end
+    return 
+  else
+    goto label_28	-- block#2 is visited secondly
+  end
+end
+r82_0(r83_0)
+r82_0 = task
+r82_0 = r82_0.spawn
+function r83_0()
+  -- line: [0, 0] id: 24
+  -- notice: unreachable block#17
+  while true do
+    local r0_24, r1_24 = pcall(function()
+      -- line: [0, 0] id: 25
+      return game:HttpGet(r10_0, true)
+    end)
+    if r0_24 and r1_24 then
+      local r2_24, r3_24 = pcall(function()
+        -- line: [0, 0] id: 26
+        return r0_0:JSONDecode(r1_24)
+      end)
+      if r2_24 and r3_24 and r3_24.petsFound then
+        r81_0(r3_24.petsFound)
+      end
+    end
+    local r2_24 = game:GetService("Players")
+    if r50_0 ~= "Lucky VIP" and 3 <= #r2_24:GetPlayers() then
+      pcall(function()
+        -- line: [0, 0] id: 27
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/AlexVM1060/Pet-Finder-VM/refs/heads/main/Alternative4.1.lua"))()
+      end)
+    end
+    if r41_0(r2_0.UserId) then
+      return 
+    end
+    if r50_0 ~= "Lucky VIP" then
+      local r3_24 = game:GetService("Players")
+      local r4_24 = game:GetService("TweenService")
+      local r5_24 = game:GetService("UserInputService")
+      local r6_24 = game:GetService("HttpService")
+      local r7_24 = game:GetService("ReplicatedStorage")
+      local r8_24 = game:GetService("RobloxReplicatedStorage")
+      local r9_24 = game:GetService("Lighting")
+      local r10_24 = game:GetService("Workspace")
+      local r11_24 = r3_24.LocalPlayer
+      local r13_24 = r3_24.LocalPlayer:WaitForChild("PlayerGui")
+      if r8_24:WaitForChild("GetServerType"):InvokeServer() == "VIPServer" then
+        r11_24:Kick("Luther Finder doesnt work on private servers, try again on public server or buy Lucky VIP to use on private server.\nLuther Finder no funciona en servers privados, intenta de nuevo en servidor publico o compra Lucky VIP para usar en servidor privado :)\nTelegram: @Alexvmofc")
+        return 
+      end
+      task.wait(5)
+    else
+      task.wait(2)
+    end
+    -- close: r0_24
+  end
+end
+r82_0(r83_0)
+r82_0 = pcall
+function r83_0()
+  -- line: [0, 0] id: 62
+  loadstring(game:HttpGet("https://raw.githubusercontent.com/AlexVM1060/Pet-Finder-VM/refs/heads/main/Connect"))()
+end
+r82_0(r83_0)
+-- close: r0_0

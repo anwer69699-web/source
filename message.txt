@@ -1,0 +1,215 @@
+-- ============================================================
+--                    PLAYER COORDINATES TRACKER
+--              نسخ إحداثيات اللاعب تلقائياً للحافظة
+-- ============================================================
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local StarterGui = game:GetService("StarterGui")
+
+local Player = Players.LocalPlayer
+local Character = Player.Character or Player.CharacterAdded:Wait()
+local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
+
+-- ============================================================
+--                    CONFIGURATION
+-- ============================================================
+
+local CONFIG = {
+    UPDATE_INTERVAL = 0.1,  -- تحديث كل 0.1 ثانية
+    DECIMAL_PLACES = 2,     -- عدد المنازل العشرية
+    SHOW_NOTIFICATIONS = true,
+    AUTO_COPY = true        -- نسخ تلقائي للحافظة
+}
+
+-- ============================================================
+--                    UTILITY FUNCTIONS
+-- ============================================================
+
+-- دالة لنسخ النص للحافظة
+local function CopyToClipboard(text)
+    local success = pcall(function()
+        if setclipboard then
+            setclipboard(text)
+            return true
+        elseif toclipboard then
+            toclipboard(text)
+            return true
+        elseif syn and syn.write_clipboard then
+            syn.write_clipboard(text)
+            return true
+        end
+        return false
+    end)
+    return success
+end
+
+-- دالة لتنسيق الإحداثيات - فقط الأرقام بالتنسيق: -485.17, -5.15, 25.08
+local function FormatCoordinates(position)
+    local format_str = "%." .. CONFIG.DECIMAL_PLACES .. "f"
+    return string.format(format_str .. ", " .. format_str .. ", " .. format_str,
+        position.X, position.Y, position.Z)
+end
+
+-- دالة لإظهار الإشعارات
+local function Notify(title, text, duration)
+    duration = duration or 3
+    pcall(function()
+        StarterGui:SetCore("SendNotification", {
+            Title = title,
+            Text = text,
+            Duration = duration
+        })
+    end)
+end
+
+-- ============================================================
+--                    GUI SETUP
+-- ============================================================
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "CoordsTracker"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.Parent = Player:WaitForChild("PlayerGui")
+
+-- الإطار الرئيسي
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Size = UDim2.new(0, 320, 0, 110)
+MainFrame.Position = UDim2.new(0, 20, 0.5, -55)
+MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+MainFrame.BackgroundTransparency = 0.2
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.Parent = ScreenGui
+
+Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 12)
+
+-- Stroke
+local Stroke = Instance.new("UIStroke", MainFrame)
+Stroke.Thickness = 2
+Stroke.Color = Color3.fromRGB(0, 255, 150)
+Stroke.Transparency = 0.3
+
+-- العنوان
+local Title = Instance.new("TextLabel", MainFrame)
+Title.Size = UDim2.new(1, -20, 0, 28)
+Title.Position = UDim2.new(0, 10, 0, 6)
+Title.BackgroundTransparency = 1
+Title.Text = "COORDINATES TRACKER"
+Title.TextColor3 = Color3.fromRGB(0, 255, 150)
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 16
+
+-- عرض الإحداثيات
+local CoordsLabel = Instance.new("TextLabel", MainFrame)
+CoordsLabel.Size = UDim2.new(1, -20, 0, 30)
+CoordsLabel.Position = UDim2.new(0, 10, 0, 36)
+CoordsLabel.BackgroundColor3 = Color3.fromRGB(10, 10, 15)
+CoordsLabel.BackgroundTransparency = 0.5
+CoordsLabel.Text = "Initializing..."
+CoordsLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+CoordsLabel.Font = Enum.Font.Code
+CoordsLabel.TextSize = 14
+Instance.new("UICorner", CoordsLabel).CornerRadius = UDim.new(0, 6)
+
+-- زر النسخ اليدوي
+local CopyButton = Instance.new("TextButton", MainFrame)
+CopyButton.Size = UDim2.new(0, 140, 0, 28)
+CopyButton.Position = UDim2.new(0.5, -70, 0, 72)
+CopyButton.BackgroundColor3 = Color3.fromRGB(0, 200, 120)
+CopyButton.Text = "COPY NOW"
+CopyButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+CopyButton.Font = Enum.Font.GothamBold
+CopyButton.TextSize = 13
+Instance.new("UICorner", CopyButton).CornerRadius = UDim.new(0, 8)
+
+-- زر الإغلاق
+local CloseButton = Instance.new("TextButton", MainFrame)
+CloseButton.Size = UDim2.new(0, 22, 0, 22)
+CloseButton.Position = UDim2.new(1, -27, 0, 5)
+CloseButton.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+CloseButton.Text = "X"
+CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseButton.Font = Enum.Font.GothamBold
+CloseButton.TextSize = 11
+Instance.new("UICorner", CloseButton).CornerRadius = UDim.new(0, 6)
+
+-- ============================================================
+--                    MAIN LOGIC
+-- ============================================================
+
+local lastCoords = ""
+local isRunning = true
+
+-- تحديث الإحداثيات
+local function UpdateCoordinates()
+    if not isRunning then return end
+    if not HumanoidRootPart then return end
+
+    local position = HumanoidRootPart.Position
+    local coordsText = FormatCoordinates(position)
+
+    CoordsLabel.Text = coordsText
+
+    -- نسخ تلقائي إذا تغيرت الإحداثيات
+    if CONFIG.AUTO_COPY and coordsText ~= lastCoords then
+        CopyToClipboard(coordsText)
+        lastCoords = coordsText
+    end
+end
+
+-- نسخ يدوي
+CopyButton.MouseButton1Click:Connect(function()
+    local position = HumanoidRootPart and HumanoidRootPart.Position
+    if position then
+        local coordsText = FormatCoordinates(position)
+        local success = CopyToClipboard(coordsText)
+
+        if success then
+            CopyButton.Text = "COPIED!"
+            CopyButton.BackgroundColor3 = Color3.fromRGB(0, 255, 100)
+            if CONFIG.SHOW_NOTIFICATIONS then
+                Notify("Success!", "Coordinates copied: " .. coordsText, 2)
+            end
+        else
+            CopyButton.Text = "FAILED"
+            CopyButton.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+        end
+
+        task.delay(1, function()
+            CopyButton.Text = "COPY NOW"
+            CopyButton.BackgroundColor3 = Color3.fromRGB(0, 200, 120)
+        end)
+    end
+end)
+
+-- إغلاق
+CloseButton.MouseButton1Click:Connect(function()
+    isRunning = false
+    ScreenGui:Destroy()
+    print("[Coords Tracker] Stopped")
+end)
+
+-- Loop للتحديث
+RunService.Heartbeat:Connect(function()
+    if isRunning then
+        UpdateCoordinates()
+    end
+end)
+
+-- إعادة التعيين عند respawn
+Player.CharacterAdded:Connect(function(newChar)
+    Character = newChar
+    HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
+end)
+
+-- إشعار البدء
+if CONFIG.SHOW_NOTIFICATIONS then
+    Notify("Coords Tracker", "Format: X, Y, Z | Auto-copy ON", 3)
+end
+
+print("[Coords Tracker] Loaded!")
+print("[Coords Tracker] Format: X, Y, Z (e.g. -485.17, -5.15, 25.08)")
