@@ -19,7 +19,7 @@ local CONFIG = {
     UPDATE_INTERVAL = 0.1,  -- تحديث كل 0.1 ثانية
     DECIMAL_PLACES = 2,     -- عدد المنازل العشرية
     SHOW_NOTIFICATIONS = true,
-    AUTO_COPY = true        -- نسخ تلقائي للحافظة
+    AUTO_COPY = false        -- نسخ تلقائي للحافظة
 }
 
 -- ============================================================
